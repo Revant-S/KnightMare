@@ -2,15 +2,12 @@
 // Created by revant-sinha on 3/6/26.
 //
 
-#include<bits/stdc++.h>
+#ifndef MOVEGENERATION_H
+#define MOVEGENERATION_H
 
 #include "board.h"
 
-
-#ifndef MOVEGEN_H
-#define MOVEGEN_H
-
-namespace AttackGen {
+namespace MoveGeneration {
     // precompute attacks
     inline U64 knightAttacks[64] = {0};
     inline U64 bishopAttacks[64] = {0};
@@ -20,18 +17,16 @@ namespace AttackGen {
     inline U64 pawnAttacks[2][64] = {0};
 
     void generateKnightAttacks();
-
     void generateBishopAttacks();
-
     void generateRookAttacks();
-
     void generateQueenAttacks();
-
     void generateKingAttacks();
-
     void generatePawnAttacks();
-
     void init();
-} // MoveGen
 
-#endif //MOVEGEN_H
+    U64 getLegalKnightMoves(U64 knightBitBoard, U64 friendlyPieces);
+    U64 getLegalBishopMoves(U64 bishopBitBoard, U64 friendlyPieces);
+
+} // MoveGeneration
+
+#endif // MOVEGENERATION_H

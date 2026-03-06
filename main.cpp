@@ -1,9 +1,9 @@
 #include <bits/stdc++.h>
 #include "board.h"
-#include "AttackGen.h"
+#include "MoveGeneration.h"
 #include "utils.h"
 
 int main() {
-    AttackGen::init();
+    MoveGeneration::init();
     return 0;
 }

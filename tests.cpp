@@ -5,22 +5,22 @@
 #include "tests.h"
 #include<iostream>
 
-#include "AttackGen.h"
+#include "MoveGeneration.h"
 #include "utils.h"
 
 void tests::checkAttackPositions(int testSquare) {
     std::cout << "--- KNIGHT  ---\n";
-    Utils::printBitBoard(AttackGen::knightAttacks[testSquare]);
+    Utils::printBitBoard(MoveGeneration::knightAttacks[testSquare]);
 
     std::cout << "\n--- BISHOP  ---\n";
-    Utils::printBitBoard(AttackGen::bishopAttacks[testSquare]);
+    Utils::printBitBoard(MoveGeneration::bishopAttacks[testSquare]);
 
     std::cout << "\n--- ROOK ---\n";
-    Utils::printBitBoard(AttackGen::rookAttacks[testSquare]);
+    Utils::printBitBoard(MoveGeneration::rookAttacks[testSquare]);
 
     std::cout << "\n--- QUEEN ---\n";
-    Utils::printBitBoard(AttackGen::queenAttacks[testSquare]);
+    Utils::printBitBoard(MoveGeneration::queenAttacks[testSquare]);
 
     std::cout << "\n--- KING  ---\n";
-    Utils::printBitBoard(AttackGen::kingAttacks[testSquare]);
+    Utils::printBitBoard(MoveGeneration::kingAttacks[testSquare]);
 }

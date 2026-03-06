@@ -1,12 +1,12 @@
 //
 // Created by revant-sinha on 3/6/26.
 //
-#include "AttackGen.h"
-#include "types.h"
+#include "MoveGeneration.h"
+#include <bit>
 #include <bits/stdc++.h>
 #include "utils.h"
 
-namespace AttackGen {
+namespace MoveGeneration {
     void generateKnightAttacks() {
         std::vector<std::pair<int, int> > displacement = {
             {2, -1}, {2, 1}, {-2, 1}, {-2, -1},
@@ -141,4 +141,20 @@ namespace AttackGen {
         generateQueenAttacks();
         generateKingAttacks();
     }
+
+    U64 getLegalKnightMoves(U64 knightBitBoard, U64 friendlyPieces) {
+        U64 legalPositions = static_cast<U64>(0);
+        while (knightBitBoard) {
+            U64 position = Utils::getLSB(knightBitBoard);
+            U64 attacks = knightAttacks[position];
+            legalPositions |= attacks & ~friendlyPieces;
+            Utils::popLSB(knightBitBoard);
+        }
+
+        return legalPositions;
+    }
+
+    // U64 getLegalBishopMoves(U64 bishopBitBoard, U64 friendlyPieces) {
+    //
+    // }
 } // MoveGen
