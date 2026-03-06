@@ -24,7 +24,7 @@ namespace Utils {
     }
 
 
-    inline SquareCoords getCoordinates(const int square) {
+    SquareCoords getCoordinates(const int square) {
         return {square / 8, square % 8};
     }
 }
