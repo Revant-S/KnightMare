@@ -4,8 +4,12 @@ project(chess)
 set(CMAKE_CXX_STANDARD 20)
 
 add_executable(chess main.cpp
-        minmax.h
-        move.cpp
-        move.h
         board.cpp
-        board.h)
+        board.h
+        movegen.cpp
+        movegen.h
+        types.h
+        utils.cpp
+        utils.h
+        constants.h
+)

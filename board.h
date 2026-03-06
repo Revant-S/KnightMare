@@ -3,38 +3,33 @@
 //
 #include<bits/stdc++.h>
 
+#include "constants.h"
+#include "types.h"
 #ifndef BOARD_H
 #define BOARD_H
 
-typedef uint64_t U64;
-
-enum Color {
-    WHITE, BLACK, BOTH
-};
-
-enum Piece {
-    PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING
-};
 
 class board {
 public:
     board();
+
     void toggle_side();
+
     void print_board();
 
+    U64 getPieceBitBoard(Piece piece, Color color) const;
+
+    U64 getOccupancies(Color color);
+
 private:
-    // boards
     U64 bitboards[2][6];
     U64 occupancies[3] = {
         static_cast<U64>(0),
         static_cast<U64>(0),
         static_cast<U64>(0)
     };
-    // game states
     int side;
-    // constants
-    int boardWidth = 8;
-    int boardHeight = 8;
-    int typesOfPieces = 6;
+    int boardWidth = ::boardWidth;
+    int boardHeight = ::boardHeight;
 };
 #endif //BOARD_H

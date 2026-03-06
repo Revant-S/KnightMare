@@ -3,6 +3,7 @@
 //
 
 #include "board.h"
+#include "types.h"
 
 
 board::board() {
@@ -82,4 +83,14 @@ void board::print_board() {
 
     // Print the game states below the board
     std::cout << "Side to move: " << (side == WHITE ? "White" : "Black") << "\n";
+}
+
+U64 board::getPieceBitBoard(Piece piece, Color color) const {
+    if (piece < PAWN || piece > KING || color < WHITE || color > BLACK) {
+        return static_cast<U64>(0);
+    }
+    return bitboards[color][piece];
+}
+U64 board::getOccupancies(Color color) {
+    return occupancies[color];
 }
