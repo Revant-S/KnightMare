@@ -6,10 +6,12 @@ set(CMAKE_CXX_STANDARD 20)
 add_executable(chess main.cpp
         board.cpp
         board.h
-        movegen.cpp
-        movegen.h
+        AttackGen.cpp
+        AttackGen.h
         types.h
         utils.cpp
         utils.h
         constants.h
+        tests.cpp
+        tests.h
 )

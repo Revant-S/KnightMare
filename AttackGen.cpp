@@ -1,12 +1,12 @@
 //
 // Created by revant-sinha on 3/6/26.
 //
-#include "movegen.h"
+#include "AttackGen.h"
 #include "types.h"
 #include <bits/stdc++.h>
 #include "utils.h"
 
-namespace MoveGen {
+namespace AttackGen {
     void generateKnightAttacks() {
         std::vector<std::pair<int, int> > displacement = {
             {2, -1}, {2, 1}, {-2, 1}, {-2, -1},
@@ -23,7 +23,7 @@ namespace MoveGen {
                     possibleMove |= (static_cast<U64>(1) << (x * boardWidth + y));
                 }
             }
-            knightAttacks[i] = possibleMove;
+            knightAttacks[i] = (possibleMove);
         }
     }
 
@@ -97,5 +97,48 @@ namespace MoveGen {
             }
             kingAttacks[i] = possibleMove;
         }
+    }
+
+    void generatePawnAttacks() {
+        std::vector<std::pair<int, int> > whiteDisplacements = {
+            {1, -1}, {1, 1}
+        };
+        std::vector<std::pair<int, int> > blackDisplacements = {
+            {-1, -1}, {-1, 1}
+        };
+
+        for (int i = 0; i < 64; i++) {
+            U64 whiteAttacks = static_cast<U64>(0);
+            U64 blackAttacks = static_cast<U64>(0);
+            auto coordinates = Utils::getCoordinates(i);
+
+            // Calculate White Pawn Attacks
+            for (auto &it: whiteDisplacements) {
+                int rank = coordinates.rank + it.first;
+                int file = coordinates.file + it.second;
+                if (rank >= 0 && rank < boardHeight && file >= 0 && file < boardWidth) {
+                    whiteAttacks |= (static_cast<U64>(1) << (rank * boardWidth + file));
+                }
+            }
+            pawnAttacks[WHITE][i] = whiteAttacks;
+
+            // Calculate Black Pawn Attacks
+            for (auto &it: blackDisplacements) {
+                int rank = coordinates.rank + it.first;
+                int file = coordinates.file + it.second;
+                if (rank >= 0 && rank < boardHeight && file >= 0 && file < boardWidth) {
+                    blackAttacks |= (static_cast<U64>(1) << (rank * boardWidth + file));
+                }
+            }
+            pawnAttacks[BLACK][i] = blackAttacks;
+        }
+    }
+
+    void init() {
+        generateKnightAttacks();
+        generateBishopAttacks();
+        generateRookAttacks();
+        generateQueenAttacks();
+        generateKingAttacks();
     }
 } // MoveGen
