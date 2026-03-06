@@ -1,0 +1,40 @@
+# ==========================================
+# C++ Compiled Binaries and Objects
+# ==========================================
+*.o
+*.obj
+*.out
+*.exe
+*.a
+*.so
+*.dll
+
+# Your specific executable name
+chess
+
+# ==========================================
+# CMake & Build Artifacts
+# ==========================================
+# This ignores CLion's default debug/release folders
+cmake-build-*/
+build/
+bin/
+lib/
+
+# CMake cache and temporary files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+compile_commands.json
+
+# ==========================================
+# IDE Specific (CLion / JetBrains)
+# ==========================================
+.idea/
+
+# ==========================================
+# OS Generated Files (Good practice)
+# ==========================================
+.DS_Store
+Thumbs.db
