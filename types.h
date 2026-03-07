@@ -21,4 +21,9 @@ enum Piece {
     PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING
 };
 
+enum Direction {
+    NORTH, SOUTH, EAST , WEST , NORTH_EAST , NORTH_WEST , SOUTH_EAST , SOUTH_WEST
+};
+
+
 #endif //TYPES_H

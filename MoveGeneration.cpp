@@ -2,7 +2,6 @@
 // Created by revant-sinha on 3/6/26.
 //
 #include "MoveGeneration.h"
-#include <bit>
 #include <bits/stdc++.h>
 #include "utils.h"
 
@@ -28,54 +27,41 @@ namespace MoveGeneration {
     }
 
     void generateBishopAttacks() {
-        std::vector<std::pair<int, int> > directions = {
-            {1, 1}, {-1, -1}, {1, -1}, {-1, 1}
-        };
+        for (int square = 0; square < 64; square++) {
+            auto coordinates = Utils::getCoordinates(square);
 
-        for (int i = 0; i < 64; i++) {
-            U64 possibleMove = static_cast<U64>(0);
-            auto coordinates = Utils::getCoordinates(i);
+            for (int direction = NORTH_EAST; direction <= SOUTH_WEST; direction++) {
+                int x = coordinates.rank + directions[direction].first;
+                int y = coordinates.file + directions[direction].second;
 
-            for (auto &dir: directions) {
-                int rank = coordinates.rank + dir.first;
-                int file = coordinates.file + dir.second;
-
-                while (rank >= 0 && file >= 0 && rank < boardHeight && file < boardWidth) {
-                    possibleMove |= (static_cast<U64>(1) << (rank * boardWidth + file));
-                    rank += dir.first;
-                    file += dir.second;
+                while (x >= 0 && y >= 0 && x < boardWidth && y < boardHeight) {
+                    // west subtracted as bishop has only diagonal directions so 4 is subtracted
+                    bishopAttacks[square][direction - 4] |= static_cast<U64>(1) << (x * boardWidth + y);
+                    x += directions[direction].first;
+                    y += directions[direction].second;
                 }
             }
-            bishopAttacks[i] = possibleMove;
         }
     }
 
     void generateRookAttacks() {
-        std::vector<std::pair<int, int> > directions = {
-            {1, 0}, {-1, 0}, {0, 1}, {0, -1}
-        };
-
         for (int i = 0; i < 64; i++) {
-            U64 possibleMove = static_cast<U64>(0);
             auto coordinates = Utils::getCoordinates(i);
 
-            for (auto &dir: directions) {
-                int rank = coordinates.rank + dir.first;
-                int file = coordinates.file + dir.second;
-
-                while (rank >= 0 && file >= 0 && rank < boardHeight && file < boardWidth) {
-                    possibleMove |= (static_cast<U64>(1) << (rank * boardWidth + file));
-                    rank += dir.first;
-                    file += dir.second;
+            for (int j = NORTH; j <= WEST; j++) {
+                int x = coordinates.rank + directions[j].first;
+                int y = coordinates.file + directions[j].second;
+                while (x >= 0 && y >= 0 && x < boardWidth && y < boardHeight) {
+                    rookAttacks[i][j] |= (static_cast<U64>(1) << (x * boardWidth + y));
+                    x += directions[j].first;
+                    y += directions[j].second;
                 }
             }
-            rookAttacks[i] = possibleMove;
         }
     }
 
     void generateQueenAttacks() {
         for (int i = 0; i < 64; i++) {
-            queenAttacks[i] = rookAttacks[i] | bishopAttacks[i];
         }
     }
 
@@ -145,12 +131,11 @@ namespace MoveGeneration {
     U64 getLegalKnightMoves(U64 knightBitBoard, U64 friendlyPieces) {
         U64 legalPositions = static_cast<U64>(0);
         while (knightBitBoard) {
-            U64 position = Utils::getLSB(knightBitBoard);
-            U64 attacks = knightAttacks[position];
+            const U64 position = Utils::getLSB(knightBitBoard);
+            const U64 attacks = knightAttacks[position];
             legalPositions |= attacks & ~friendlyPieces;
             Utils::popLSB(knightBitBoard);
         }
-
         return legalPositions;
     }
 
