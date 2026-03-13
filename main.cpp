@@ -3,22 +3,17 @@
 #include "PreMatchComputations/PreMatchAttackComputation.h"
 #include "search/legal_move_generation/GenerateLeglMove.h"
 #include "tests/tests.h"
+#include "utils/utils.h"
 
 int main() {
-    Board board;
+    std::string startFen = "rnb1kbnr/pp1ppppp/8/q1p5/2P1P3/8/PP1P1PPP/RNBQKBNR w kq- - 1 3";
+    Board board(startFen);
     PreMatchAttackComputation::init();
 
     std::cout << "--- BOARD STATE ---\n";
     board.print_board();
-    //
-    // std::cout << "\n--- TESTING WHITE KNIGHT MOVES ---\n";
-    // // Get all White Knight moves
-    // std::vector<Move> knightMoves = GenerateLegalMove::getBishopPseudoLegalMoves(board);
-    //
-    // // Visualize them!
-    // tests::visualizeMoves(knightMoves);
+    Utils::printCastleRights(board);
 
-    board.getAndPrintPawnMovePermissions();
 
     return 0;
 }

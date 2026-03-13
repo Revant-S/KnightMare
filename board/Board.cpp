@@ -6,40 +6,58 @@
 #include "../types_constants/types.h"
 #include <bitset>
 
-Board::Board(std::string fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") {
-    side = WHITE;
-    U64 whitePawnPositions = static_cast<U64>(0);
-    U64 blackPawnPositions = static_cast<U64>(0);
-    doublePawnMoveRight = (1 << 16) - 1;
-    for (int i = 0; i < boardWidth; i++) {
-        int bitPosition = (boardWidth + i);
-        const U64 position = static_cast<U64>(1) << bitPosition;
-        whitePawnPositions = whitePawnPositions | position;
+Board::Board(std::string fenString) {
+    int rank = 7, file = 0;
+    int sideIndex = 0;
+    for (const unsigned char piece: fenString) {
+        sideIndex++;
+        if (piece == ' ')break;
+        if (piece == '/') {
+            rank -= 1;
+            file = 0;
+        } else if (std::isdigit(piece)) {
+            const int skips = piece - '0';
+            file += skips;
+        } else {
+            int boardIndex = rank * 8 + file;
+            if (boardIndex >= 0 && boardIndex < 64) {
+                const int color = fenEnumMapping[piece].color;
+                const int boardPiece = fenEnumMapping[piece].piece;
+                bitboards[color][boardPiece] |= (static_cast<U64>(1) << boardIndex);
+                occupancies[color] |= (static_cast<U64>(1) << boardIndex);
+                occupancies[BOTH] |= (static_cast<U64>(1) << boardIndex);
+                file++;
+            } else {
+                break;
+            }
+        }
     }
-    for (int i = 0; i < boardWidth; i++) {
-        int bitPosition = (boardWidth + i);
-        const U64 position = static_cast<U64>(1) << bitPosition;
-        blackPawnPositions = blackPawnPositions | position;
+    if (fenString[sideIndex] == 'w') {
+        side = WHITE;
+    } else {
+        side = BLACK;
     }
-    bitboards[WHITE][PAWN] = whitePawnPositions;
-    bitboards[BLACK][PAWN] = blackPawnPositions;
-    bitboards[WHITE][KNIGHT] = 0x42ULL;
-    bitboards[BLACK][KNIGHT] = 0x4200000000000000ULL;
-    bitboards[WHITE][ROOK] = 0x81ULL;
-    bitboards[BLACK][ROOK] = 0x8100000000000000ULL;
-    bitboards[WHITE][BISHOP] = 0x24ULL;
-    bitboards[BLACK][BISHOP] = 0x2400000000000000ULL;
-    bitboards[WHITE][QUEEN] = 0x08ULL;
-    bitboards[BLACK][QUEEN] = 0x0800000000000000ULL;
-    bitboards[WHITE][KING] = 0x10ULL;
-    bitboards[BLACK][KING] = 0x1000000000000000ULL;
+    int castleIndex = sideIndex + 2;
+    castleRight[WHITE]->kingSide = false;
+    castleRight[WHITE]->queenSide = false;
+    castleRight[BLACK]->kingSide = false;
+    castleRight[BLACK]->queenSide = false;
 
-    // set occupied positions;
-    for (int i = PAWN; i <= KING; i++) {
-        occupancies[WHITE] = occupancies[WHITE] | bitboards[WHITE][i];
-        occupancies[BLACK] = occupancies[BLACK] | bitboards[BLACK][i];
+    while (castleIndex < fenString.length() && fenString[castleIndex] != ' ') {
+        if (const char symbol = fenString[castleIndex]; symbol == '-') {
+            break;
+        } else if (symbol == 'K') {
+            castleRight[WHITE]->kingSide = true;
+        } else if (symbol == 'Q') {
+            castleRight[WHITE]->queenSide = true;
+        } else if (symbol == 'k') {
+            castleRight[BLACK]->kingSide = true;
+        } else if (symbol == 'q') {
+            castleRight[BLACK]->queenSide = true;
+        }
+
+        castleIndex++;
     }
-    occupancies[BOTH] = occupancies[WHITE] | occupancies[BLACK];
 }
 
 void Board::toggle_side() {
@@ -115,6 +133,10 @@ uint16_t Board::getDoubleMovePawnPermissions(Color color) {
         return -1;
     }
     return pawnMasks[color] & doublePawnMoveRight;
+}
+
+CastleRights Board::getCastleRights(Color color) {
+    return *castleRight[color];
 }
 
 

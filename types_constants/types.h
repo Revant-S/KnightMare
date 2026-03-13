@@ -22,12 +22,22 @@ enum Piece {
 };
 
 enum Direction {
-    NORTH, SOUTH, EAST , WEST , NORTH_EAST , NORTH_WEST , SOUTH_EAST , SOUTH_WEST
+    NORTH, SOUTH, EAST, WEST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST
 };
 
-struct Move{
+struct Move {
     int from;
     int to; // all the positions where it can attack should be ORed
+};
+
+struct ColorPiece {
+    Color color;
+    Piece piece;
+};
+
+struct CastleRights {
+    bool kingSide;
+    bool queenSide;
 };
 
 #endif //TYPES_H

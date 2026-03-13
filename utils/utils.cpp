@@ -28,7 +28,30 @@ namespace Utils {
         return {square / 8, square % 8};
     }
 
-    void compareFen(std::string &fenGenerated , std::string &fenToCompare) {
+
+    void printCastleRights(Board &board) {
+        auto [whiteKingSide, whiteQueenSide] = board.getCastleRights(WHITE);
+        auto [blackKingSide, blackQueenSide] = board.getCastleRights(BLACK);
+
+        if (whiteKingSide) {
+            std::cout << "White can castle kingside\n";
+        }
+
+        if (whiteQueenSide) {
+            std::cout << "White can castle queenside\n";
+        }
+
+        if (blackKingSide) {
+            std::cout << "Black  can castle kingside\n";
+        }
+
+        if (blackQueenSide) {
+            std::cout << "Black  can castle queenside\n";
+        }
+    }
+
+
+    void compareFen(std::string &fenGenerated, std::string &fenToCompare) {
         if (fenGenerated == fenToCompare) {
             std::cout << "Two strings match";
             return;

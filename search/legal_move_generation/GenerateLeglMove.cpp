@@ -170,10 +170,10 @@ namespace GenerateLegalMove {
         return kingMoves;
     }
 
-    std::vector<Move> getPawnPseudoLegalMoves(Board &board) {
-        const Color side = board.getSide();
-        const uint16_t doubleMoveRights = board.getDoubleMovePawnPermissions(side);
-        const U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
-
-    }
+    // std::vector<Move> getPawnPseudoLegalMoves(Board &board) {
+    //     const Color side = board.getSide();
+    //     const uint16_t doubleMoveRights = board.getDoubleMovePawnPermissions(side);
+    //     const U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
+    //
+    // }
 } // GenerateLegalMove

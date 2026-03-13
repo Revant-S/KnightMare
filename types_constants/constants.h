@@ -30,7 +30,26 @@ inline std::vector<std::pair<int, int> > knight_directions = {
     {1, -2}, {-1, -2}, {1, 2}, {-1, 2}
 };
 
-uint16_t pawnMasks[2] = {0b1111'1111'0000'0000, 0b0000'0000'1111'1111};
+
+inline std::map<char, ColorPiece> fenEnumMapping = {
+    // White Pieces (Uppercase)
+    {'P', {WHITE, PAWN}},
+    {'N', {WHITE, KNIGHT}},
+    {'B', {WHITE, BISHOP}},
+    {'R', {WHITE, ROOK}},
+    {'Q', {WHITE, QUEEN}},
+    {'K', {WHITE, KING}},
+
+    // Black Pieces (Lowercase)
+    {'p', {BLACK, PAWN}},
+    {'n', {BLACK, KNIGHT}},
+    {'b', {BLACK, BISHOP}},
+    {'r', {BLACK, ROOK}},
+    {'q', {BLACK, QUEEN}},
+    {'k', {BLACK, KING}}
+};
+
+inline uint16_t pawnMasks[2] = {0b1111'1111'0000'0000, 0b0000'0000'1111'1111};
 
 
 #endif //CONSTANTS_H

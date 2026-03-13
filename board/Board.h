@@ -11,7 +11,7 @@
 
 class Board {
 public:
-    Board(std::string fenString);
+    Board(std::string fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 
     void toggle_side();
 
@@ -25,10 +25,12 @@ public:
 
     uint16_t getDoubleMovePawnPermissions(Color color);
 
+    CastleRights getCastleRights(Color color) ;
+
     [[nodiscard]] Color getSide() const;
 
 private:
-    U64 bitboards[2][6];
+    U64 bitboards[2][6] = {0};
     U64 occupancies[3] = {
         static_cast<U64>(0),
         static_cast<U64>(0),
@@ -38,5 +40,9 @@ private:
     int boardWidth = ::BOARD_WIDTH;
     int boardHeight = ::BOARD_HEIGHT;
     uint16_t doublePawnMoveRight = 0;
+    CastleRights castleRight[2][2] = {
+        {true, true},
+        {true, true}
+    };
 };
 #endif //BOARD_H
