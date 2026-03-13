@@ -2,22 +2,23 @@
 // Created by revant-sinha on 3/6/26.
 //
 
-#include "board.h"
-#include "types.h"
+#include "Board.h"
+#include "../types_constants/types.h"
+#include <bitset>
 
-
-board::board() {
-    // start with white
+Board::Board(std::string fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR") {
     side = WHITE;
-    // set pawn positions
     U64 whitePawnPositions = static_cast<U64>(0);
     U64 blackPawnPositions = static_cast<U64>(0);
+    doublePawnMoveRight = (1 << 16) - 1;
     for (int i = 0; i < boardWidth; i++) {
-        const U64 position = static_cast<U64>(1) << (boardWidth + i);
+        int bitPosition = (boardWidth + i);
+        const U64 position = static_cast<U64>(1) << bitPosition;
         whitePawnPositions = whitePawnPositions | position;
     }
     for (int i = 0; i < boardWidth; i++) {
-        const U64 position = static_cast<U64>(1) << (boardWidth * 6 + i);
+        int bitPosition = (boardWidth + i);
+        const U64 position = static_cast<U64>(1) << bitPosition;
         blackPawnPositions = blackPawnPositions | position;
     }
     bitboards[WHITE][PAWN] = whitePawnPositions;
@@ -41,25 +42,19 @@ board::board() {
     occupancies[BOTH] = occupancies[WHITE] | occupancies[BLACK];
 }
 
-void board::toggle_side() {
+void Board::toggle_side() {
     side == WHITE ? side = BLACK : side = WHITE;
 }
 
-void board::print_board() {
+void Board::print_board() {
     std::cout << "\n";
 
     for (int rank = 7; rank >= 0; rank--) {
-        std::cout << rank + 1 << "  "; // Print the rank number on the left
-
-        // Loop from File 0 (a) to File 7 (h)
+        std::cout << rank + 1 << "  ";
         for (int file = 0; file < 8; file++) {
             int square = rank * 8 + file;
-            char pieceChar = '.'; // Default to an empty square
-
-            // Create a mask for the current square
+            char pieceChar = '.';
             U64 squareMask = 1ULL << square;
-
-            // Check White Pieces
             if (bitboards[WHITE][PAWN] & squareMask) pieceChar = 'P';
             else if (bitboards[WHITE][KNIGHT] & squareMask) pieceChar = 'N';
             else if (bitboards[WHITE][BISHOP] & squareMask) pieceChar = 'B';
@@ -67,7 +62,6 @@ void board::print_board() {
             else if (bitboards[WHITE][QUEEN] & squareMask) pieceChar = 'Q';
             else if (bitboards[WHITE][KING] & squareMask) pieceChar = 'K';
 
-                // Check Black Pieces
             else if (bitboards[BLACK][PAWN] & squareMask) pieceChar = 'p';
             else if (bitboards[BLACK][KNIGHT] & squareMask) pieceChar = 'n';
             else if (bitboards[BLACK][BISHOP] & squareMask) pieceChar = 'b';
@@ -80,17 +74,50 @@ void board::print_board() {
         std::cout << "\n";
     }
     std::cout << "\n   a b c d e f g h\n\n";
-
-    // Print the game states below the board
     std::cout << "Side to move: " << (side == WHITE ? "White" : "Black") << "\n";
 }
 
-U64 board::getPieceBitBoard(Piece piece, Color color) const {
+U64 Board::getPieceBitBoard(const Piece piece, const Color color) const {
     if (piece < PAWN || piece > KING || color < WHITE || color > BLACK) {
         return static_cast<U64>(0);
     }
     return bitboards[color][piece];
 }
-U64 board::getOccupancies(Color color) {
+
+U64 Board::getOccupancies(const Color color) const {
     return occupancies[color];
+}
+
+void Board::getAndPrintPawnMovePermissions() {
+    std::cout << "permissions mask\n";
+    std::cout << std::bitset<16>(doublePawnMoveRight) << "\n";;
+
+    std::cout << "Black Pawn Double Move Permissions" << "\n";
+    for (int i = 0; i < boardWidth; i++) {
+        if ((doublePawnMoveRight & (static_cast<int16_t>(1) << i))) {
+            std::cout << "p" << " ";
+        } else {
+            std::cout << "." << " ";
+        }
+    }
+    std::cout << "\n White Pawn Double Move Permissions" << "\n";
+    for (int i = boardWidth; i < 16; i++) {
+        if ((doublePawnMoveRight & (static_cast<int16_t>(1) << i))) {
+            std::cout << "P" << " ";
+        } else {
+            std::cout << "." << " ";
+        }
+    }
+}
+
+uint16_t Board::getDoubleMovePawnPermissions(Color color) {
+    if (color > BLACK) {
+        return -1;
+    }
+    return pawnMasks[color] & doublePawnMoveRight;
+}
+
+
+Color Board::getSide() const {
+    return side;
 }

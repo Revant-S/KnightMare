@@ -6,8 +6,8 @@
 #define CONSTANTS_H
 #include "types.h"
 
-constexpr int boardWidth = 8;
-constexpr int boardHeight = 8;
+constexpr int BOARD_WIDTH = 8;
+constexpr int BOARD_HEIGHT = 8;
 
 /**
  * IGNORE THE X AND Y SHOWN IN THE CLION THAT IS MISLEADING
@@ -24,5 +24,13 @@ inline std::vector<std::pair<int, int> > directions = {
     {-1, 1}, // SOUTH_EAST (Rank -1, File +1)
     {-1, -1} // SOUTH_WEST (Rank -1, File -1)
 };
+
+inline std::vector<std::pair<int, int> > knight_directions = {
+    {2, -1}, {2, 1}, {-2, 1}, {-2, -1},
+    {1, -2}, {-1, -2}, {1, 2}, {-1, 2}
+};
+
+uint16_t pawnMasks[2] = {0b1111'1111'0000'0000, 0b0000'0000'1111'1111};
+
 
 #endif //CONSTANTS_H

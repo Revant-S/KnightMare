@@ -2,13 +2,12 @@
 // Created by revant-sinha on 3/6/26.
 //
 
-#ifndef MOVEGENERATION_H
-#define MOVEGENERATION_H
+#ifndef PREMATCHATTACKCOMPUTATION_H
+#define PREMATCHATTACKCOMPUTATION_H
 
-#include "board.h"
+#include "../board/Board.h"
 
-namespace MoveGeneration {
-    // precompute attacks
+namespace PreMatchAttackComputation {
     inline U64 knightAttacks[64] = {0};
     inline U64 bishopAttacks[64][4] = {0};
     inline U64 rookAttacks[64][4] = {0};
@@ -17,22 +16,12 @@ namespace MoveGeneration {
     inline U64 pawnAttacks[2][64] = {0};
 
     void generateKnightAttacks();
-
     void generateBishopAttacks();
-
     void generateRookAttacks();
-
     void generateQueenAttacks();
-
     void generateKingAttacks();
-
     void generatePawnAttacks();
-
     void init();
-
-    U64 getLegalKnightMoves(U64 knightBitBoard, U64 friendlyPieces);
-
-    U64 getLegalBishopMoves(U64 bishopBitBoard, U64 friendlyPieces);
 } // MoveGeneration
 
-#endif // MOVEGENERATION_H
+#endif // PREMATCHATTACKCOMPUTATION_H

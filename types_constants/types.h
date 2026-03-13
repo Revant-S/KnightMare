@@ -25,5 +25,9 @@ enum Direction {
     NORTH, SOUTH, EAST , WEST , NORTH_EAST , NORTH_WEST , SOUTH_EAST , SOUTH_WEST
 };
 
+struct Move{
+    int from;
+    int to; // all the positions where it can attack should be ORed
+};
 
 #endif //TYPES_H
