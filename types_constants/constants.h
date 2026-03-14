@@ -10,6 +10,7 @@ constexpr int BOARD_WIDTH = 8;
 constexpr int BOARD_HEIGHT = 8;
 
 /**
+ * If Using CLION
  * IGNORE THE X AND Y SHOWN IN THE CLION THAT IS MISLEADING
  */
 inline std::vector<std::pair<int, int> > directions = {

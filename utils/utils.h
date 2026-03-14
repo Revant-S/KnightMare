@@ -16,6 +16,8 @@ namespace Utils {
 
     void printCastleRights(Board &board);
 
+    void printMoves(Board &board);
+
 
     inline int getLSB(const U64 bb) {
         assert(bb != 0);

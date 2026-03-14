@@ -97,7 +97,14 @@ namespace PreMatchAttackComputation {
                     whiteAttacks |= (static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile));
                 }
             }
-
+            // // one step front
+            // if (rank + 1 < 8) {
+            //     whiteAttacks |= static_cast<U64>(1) << ((rank + 1) * BOARD_WIDTH + file);
+            // }
+            // // two steps forward
+            // if (rank == 1) {
+            //     whiteAttacks |= static_cast<U64>(1) << ((rank + 2) * BOARD_WIDTH + file);
+            // }
             pawnAttacks[WHITE][square] = whiteAttacks;
 
             // Calculate Black Pawn Attacks
@@ -108,6 +115,15 @@ namespace PreMatchAttackComputation {
                     blackAttacks |= (static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile));
                 }
             }
+
+            // one step front
+            // if (rank - 1 >= 0) {
+            //     blackAttacks |= static_cast<U64>(1) << ((rank - 1) * BOARD_WIDTH + file);
+            // }
+            // // two steps forward
+            // if (rank == 6) {
+            //     blackAttacks |= static_cast<U64>(1) << ((rank - 2) * BOARD_WIDTH + file);
+            // }
             pawnAttacks[BLACK][square] = blackAttacks;
         }
     }

@@ -64,7 +64,7 @@ void Board::toggle_side() {
     side == WHITE ? side = BLACK : side = WHITE;
 }
 
-void Board::print_board() {
+void Board::print_board() const {
     std::cout << "\n";
 
     for (int rank = 7; rank >= 0; rank--) {
@@ -138,7 +138,6 @@ uint16_t Board::getDoubleMovePawnPermissions(Color color) {
 CastleRights Board::getCastleRights(Color color) {
     return *castleRight[color];
 }
-
 
 Color Board::getSide() const {
     return side;

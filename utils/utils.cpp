@@ -50,6 +50,9 @@ namespace Utils {
         }
     }
 
+    void printMoves(Board &board) {
+    }
+
 
     void compareFen(std::string &fenGenerated, std::string &fenToCompare) {
         if (fenGenerated == fenToCompare) {

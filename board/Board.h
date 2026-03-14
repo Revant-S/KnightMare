@@ -1,8 +1,8 @@
 //
 // Created by revant-sinha on 3/6/26.
 //
-#include<bits/stdc++.h>
 
+#include<bits/stdc++.h>
 #include "../types_constants/constants.h"
 #include "../types_constants/types.h"
 #ifndef BOARD_H
@@ -15,7 +15,7 @@ public:
 
     void toggle_side();
 
-    void print_board();
+    void print_board() const;
 
     U64 getPieceBitBoard(Piece piece, Color color) const;
 
@@ -25,7 +25,7 @@ public:
 
     uint16_t getDoubleMovePawnPermissions(Color color);
 
-    CastleRights getCastleRights(Color color) ;
+    CastleRights getCastleRights(Color color);
 
     [[nodiscard]] Color getSide() const;
 

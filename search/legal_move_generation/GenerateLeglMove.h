@@ -18,7 +18,7 @@ namespace GenerateLegalMove {
 
     std::vector<Move> getKingPseudoLegalMoves(Board &board);
 
-    // std::vector<Move> getPawnPseudoLegalMoves(Board &board);
+    std::vector<Move> getPawnPseudoLegalMoves(const Board &board);
 } // GenerateLegalMove
 
 #endif //GENERATELEGLMOVE_H

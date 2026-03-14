@@ -170,10 +170,63 @@ namespace GenerateLegalMove {
         return kingMoves;
     }
 
-    // std::vector<Move> getPawnPseudoLegalMoves(Board &board) {
-    //     const Color side = board.getSide();
-    //     const uint16_t doubleMoveRights = board.getDoubleMovePawnPermissions(side);
-    //     const U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
-    //
-    // }
+    std::vector<Move> getPawnPseudoLegalMoves(const Board &board) {
+        const Color side = board.getSide();
+        const Color enemySide = (side == WHITE) ? BLACK : WHITE;
+
+        const U64 enemyOccupancies = board.getOccupancies(enemySide);
+        const U64 totalOccupancies = board.getOccupancies(BOTH);
+        U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
+
+        std::vector<Move> moves;
+
+        while (pawnPositions) {
+            const int pawnPosition = Utils::getLSB(pawnPositions);
+            Utils::popLSB(pawnPositions);
+
+            U64 pawnAttacks = PreMatchAttackComputation::pawnAttacks[side][pawnPosition];
+            pawnAttacks &= enemyOccupancies;
+
+            while (pawnAttacks) {
+                const int destination = Utils::getLSB(pawnAttacks);
+                Utils::popLSB(pawnAttacks);
+                moves.push_back({pawnPosition, destination});
+            }
+            if (side == WHITE) {
+
+                if (const int step1 = pawnPosition + BOARD_WIDTH;
+                    step1 < 64 && !((static_cast<U64>(1) << step1) & totalOccupancies)) {
+                    moves.push_back({
+                        pawnPosition,
+                        step1
+                    });
+                    std::cout << "PawnPosition: " << pawnPosition << " Destination " << step1;
+                    // 2 steps forward
+                    if (const int step2 = pawnPosition + 2 * BOARD_WIDTH;
+                        pawnPosition / BOARD_WIDTH == 1 && !((static_cast<U64>(1) << step2) & totalOccupancies)) {
+                        moves.push_back(
+                            {
+                                pawnPosition,
+                                step2
+                            }
+                        );
+                    }
+                }
+            } else {
+                // 1 step forward
+                if (const int step1 = pawnPosition - BOARD_WIDTH;
+                    step1 >= 0 && !((static_cast<U64>(1) << step1) & totalOccupancies)) {
+                    moves.push_back({pawnPosition, step1});
+
+                    // 2 steps forward
+                    if (const int step2 = pawnPosition - 2 * BOARD_WIDTH;
+                        pawnPosition / BOARD_WIDTH == 6 && !((static_cast<U64>(1) << step2) & totalOccupancies)) {
+                        moves.push_back({pawnPosition, step2});
+                    }
+                }
+            }
+        }
+
+        return moves;
+    }
 } // GenerateLegalMove
