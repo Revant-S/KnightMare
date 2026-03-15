@@ -69,17 +69,17 @@ namespace GenerateLegalMove {
 
     std::vector<Move> getBishopPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
-        U64 friendlyOccupancies = board.getOccupancies(side);
-        U64 totalOccupancy = board.getOccupancies(BOTH);
+        const U64 friendlyOccupancies = board.getOccupancies(side);
+        const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 bishopPositions = board.getPieceBitBoard(BISHOP, side);
 
         std::vector<Move> bishopMoves;
         while (bishopPositions) {
-            int bishopPosition = Utils::getLSB(bishopPositions);
+            const int bishopPosition = Utils::getLSB(bishopPositions);
             Utils::popLSB(bishopPositions);
             for (int direction = NORTH_EAST; direction <= SOUTH_WEST; direction++) {
-                U64 fullRay = PreMatchAttackComputation::bishopAttacks[bishopPosition][direction - 4];
-                U64 blockers = fullRay & totalOccupancy;
+                const U64 fullRay = PreMatchAttackComputation::bishopAttacks[bishopPosition][direction - 4];
+                const U64 blockers = fullRay & totalOccupancy;
                 U64 finalRay;
                 if (blockers) {
                     int nearestBlocker;
@@ -97,7 +97,7 @@ namespace GenerateLegalMove {
                 }
                 finalRay &= ~friendlyOccupancies;
                 while (finalRay) {
-                    int destination = Utils::getLSB(finalRay);
+                    const int destination = Utils::getLSB(finalRay);
                     Utils::popLSB(finalRay);
                     bishopMoves.push_back({
                         bishopPosition,
@@ -111,16 +111,16 @@ namespace GenerateLegalMove {
 
     std::vector<Move> getQueenPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
-        U64 friendlyOccupancy = board.getOccupancies(side);
-        U64 totalOccupancy = board.getOccupancies(BOTH);
+        const U64 friendlyOccupancy = board.getOccupancies(side);
+        const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 queenPositions = board.getPieceBitBoard(QUEEN, side);
         std::vector<Move> queenMoves;
         while (queenPositions) {
-            int queenPosition = Utils::getLSB(queenPositions);
+            const int queenPosition = Utils::getLSB(queenPositions);
             Utils::popLSB(queenPositions);
             for (int direction = NORTH; direction <= SOUTH_WEST; direction++) {
-                U64 fullRay = PreMatchAttackComputation::queenAttacks[queenPosition][direction];
-                U64 blockers = fullRay & totalOccupancy;
+                const U64 fullRay = PreMatchAttackComputation::queenAttacks[queenPosition][direction];
+                const U64 blockers = fullRay & totalOccupancy;
                 U64 finalRay = fullRay;
                 if (blockers) {
                     int nearestBlocker;
@@ -131,12 +131,12 @@ namespace GenerateLegalMove {
                         nearestBlocker = Utils::getMSB(blockers);
                     }
 
-                    U64 subtractRay = PreMatchAttackComputation::queenAttacks[nearestBlocker][direction];
+                    const U64 subtractRay = PreMatchAttackComputation::queenAttacks[nearestBlocker][direction];
                     finalRay = fullRay ^ subtractRay;
                 }
                 finalRay &= ~friendlyOccupancy;
                 while (finalRay) {
-                    int destination = Utils::getLSB(finalRay);
+                    const int destination = Utils::getLSB(finalRay);
                     Utils::popLSB(finalRay);
                     queenMoves.push_back({
                         queenPosition,
@@ -150,25 +150,49 @@ namespace GenerateLegalMove {
 
     std::vector<Move> getKingPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
-        U64 friendlyOccupancy = board.getOccupancies(side);
+        const U64 friendlyOccupancy = board.getOccupancies(side);
+        const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 kingPositions = board.getPieceBitBoard(KING, side);
+        const int castleRights = board.getCastleRights(side);
+
         std::vector<Move> kingMoves;
+
         while (kingPositions) {
-            int kingPosition = Utils::getLSB(kingPositions);
+            const int kingPosition = Utils::getLSB(kingPositions);
             Utils::popLSB(kingPositions);
+
+            // Normal king moves
             U64 pseudoMoves = PreMatchAttackComputation::kingAttacks[kingPosition] & ~friendlyOccupancy;
             while (pseudoMoves) {
-                int destination = Utils::getLSB(pseudoMoves);
+                const int destination = Utils::getLSB(pseudoMoves);
                 Utils::popLSB(pseudoMoves);
-                kingMoves.push_back({
-                    kingPosition,
-                    destination
-                });
+                kingMoves.push_back({kingPosition, destination});
+            }
+
+            if (side == WHITE) {
+                if ((castleRights & WHITE_KING_SIDE_CASTLE_MASK) &&
+                    !(totalOccupancy & WHITE_KING_SIDE_CASTLE_EMPTY)) {
+                    kingMoves.push_back({WHITE_KING_SQUARE, 6, CASTLE_KING_SIDE});
+                }
+                if ((castleRights & WHITE_QUEEN_SIDE_CASTLE_MASK) &&
+                    !(totalOccupancy & WHITE_QUEEN_SIDE_CASTLE_EMPTY)) {
+                    kingMoves.push_back({WHITE_KING_SQUARE, 2, CASTLE_QUEEN_SIDE});
+                }
+            } else {
+                if ((castleRights & BLACK_KING_SIDE_CASTLE_MASK) &&
+                    !(totalOccupancy & BLACK_KING_SIDE_CASTLE_EMPTY)) {
+                    kingMoves.push_back({BLACK_KING_SQUARE, 62, CASTLE_KING_SIDE});
+                }
+                if ((castleRights & BLACK_QUEEN_SIDE_CASTLE_MASK) &&
+                    !(totalOccupancy & BLACK_QUEEN_SIDE_CASTLE_EMPTY)) {
+                    kingMoves.push_back({BLACK_KING_SQUARE, 58, CASTLE_QUEEN_SIDE});
+                }
             }
         }
 
         return kingMoves;
     }
+
 
     std::vector<Move> getPawnPseudoLegalMoves(const Board &board) {
         const Color side = board.getSide();

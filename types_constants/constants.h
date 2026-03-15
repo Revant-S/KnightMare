@@ -12,6 +12,16 @@ constexpr int BLACK_BACK_RANK_THRESHOLD_INDEX = 56;
 constexpr int WHITE_BACK_RANK_THRESHOLD_INDEX = 7;
 constexpr int FINAL_SQUARE_INDEX = 63;
 constexpr int FIRST_SQUARE_INDEX = 0;
+constexpr int WHITE_KING_SIDE_CASTLE_MASK = 0b1;
+constexpr int WHITE_QUEEN_SIDE_CASTLE_MASK = 0b10;
+constexpr int BLACK_KING_SIDE_CASTLE_MASK = 0b100;
+constexpr int BLACK_QUEEN_SIDE_CASTLE_MASK = 0b1000;
+constexpr int WHITE_KING_SQUARE = 4;
+constexpr int BLACK_KING_SQUARE = 60;
+constexpr U64 WHITE_KING_SIDE_CASTLE_EMPTY = (1ULL << 5) | (1ULL << 6);
+constexpr U64 WHITE_QUEEN_SIDE_CASTLE_EMPTY = (1ULL << 1) | (1ULL << 2) | (1ULL << 3);
+constexpr U64 BLACK_KING_SIDE_CASTLE_EMPTY = (1ULL << 61) | (1ULL << 62);
+constexpr U64 BLACK_QUEEN_SIDE_CASTLE_EMPTY = (1ULL << 57) | (1ULL << 58) | (1ULL << 59);
 
 /**
  * If Using CLION

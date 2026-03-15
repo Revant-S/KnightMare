@@ -31,22 +31,22 @@ namespace Utils {
 
 
     void printCastleRights(Board &board) {
-        auto [whiteKingSide, whiteQueenSide] = board.getCastleRights(WHITE);
-        auto [blackKingSide, blackQueenSide] = board.getCastleRights(BLACK);
+        int whiteCastleRights = board.getCastleRights(WHITE);
+        int blackCastleRights = board.getCastleRights(BLACK);
 
-        if (whiteKingSide) {
+        if (whiteCastleRights & WHITE_KING_SIDE_CASTLE_MASK) {
             std::cout << "White can castle kingside\n";
         }
 
-        if (whiteQueenSide) {
+        if (whiteCastleRights & WHITE_QUEEN_SIDE_CASTLE_MASK) {
             std::cout << "White can castle queenside\n";
         }
 
-        if (blackKingSide) {
+        if (blackCastleRights & BLACK_KING_SIDE_CASTLE_MASK) {
             std::cout << "Black  can castle kingside\n";
         }
 
-        if (blackQueenSide) {
+        if (blackCastleRights & BLACK_QUEEN_SIDE_CASTLE_MASK) {
             std::cout << "Black  can castle queenside\n";
         }
     }

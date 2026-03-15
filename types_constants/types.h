@@ -26,7 +26,7 @@ enum Direction {
 };
 
 enum MoveType {
-    SIMPLE, CASTLE, PROMOTION
+    SIMPLE, PROMOTION, CASTLE_KING_SIDE, CASTLE_QUEEN_SIDE
 };
 
 struct Move {
@@ -41,9 +41,5 @@ struct ColorPiece {
     Piece piece;
 };
 
-struct CastleRights {
-    bool kingSide;
-    bool queenSide;
-};
 
 #endif //TYPES_H

@@ -2,12 +2,13 @@
 // Created by revant-sinha on 3/6/26.
 //
 
-#include<bits/stdc++.h>
-#include "../types_constants/constants.h"
-#include "../types_constants/types.h"
+
 #ifndef BOARD_H
 #define BOARD_H
 
+#include<bits/stdc++.h>
+#include "../types_constants/constants.h"
+#include "../types_constants/types.h"
 
 class Board {
 public:
@@ -25,7 +26,7 @@ public:
 
     uint16_t getDoubleMovePawnPermissions(Color color);
 
-    CastleRights getCastleRights(Color color);
+    [[nodiscard]] int getCastleRights(Color color) const;
 
     [[nodiscard]] Color getSide() const;
 
@@ -40,9 +41,7 @@ private:
     int boardWidth = ::BOARD_WIDTH;
     int boardHeight = ::BOARD_HEIGHT;
     uint16_t doublePawnMoveRight = 0;
-    CastleRights castleRight[2][2] = {
-        {true, true},
-        {true, true}
-    };
+
+    int castleRights = 0b1111;
 };
 #endif //BOARD_H

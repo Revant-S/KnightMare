@@ -26,10 +26,6 @@ Board::Board(const std::string &fenString) {
                 bitboards[color][boardPiece] |= (static_cast<U64>(1) << boardIndex);
                 occupancies[color] |= (static_cast<U64>(1) << boardIndex);
                 occupancies[BOTH] |= (static_cast<U64>(1) << boardIndex);
-                // if (boardPiece == PAWN && color == WHITE) {
-                //     std::cout << "White pawn bitboard : " << std::bitset<64>(bitboards[color][boardPiece])<<" ";
-                //     std::cout << "Board Index Of White Pawn : " << boardIndex << " \n";
-                // }
                 file++;
             } else {
                 break;
@@ -42,24 +38,20 @@ Board::Board(const std::string &fenString) {
         side = BLACK;
     }
     int castleIndex = sideIndex + 2;
-    castleRight[WHITE]->kingSide = false;
-    castleRight[WHITE]->queenSide = false;
-    castleRight[BLACK]->kingSide = false;
-    castleRight[BLACK]->queenSide = false;
 
+    castleRights = 0b0000;
     while (castleIndex < fenString.length() && fenString[castleIndex] != ' ') {
         if (const char symbol = fenString[castleIndex]; symbol == '-') {
             break;
         } else if (symbol == 'K') {
-            castleRight[WHITE]->kingSide = true;
+            castleRights |= WHITE_KING_SIDE_CASTLE_MASK;
         } else if (symbol == 'Q') {
-            castleRight[WHITE]->queenSide = true;
+            castleRights |= WHITE_QUEEN_SIDE_CASTLE_MASK;
         } else if (symbol == 'k') {
-            castleRight[BLACK]->kingSide = true;
+            castleRights |= BLACK_KING_SIDE_CASTLE_MASK;
         } else if (symbol == 'q') {
-            castleRight[BLACK]->queenSide = true;
+            castleRights |= BLACK_QUEEN_SIDE_CASTLE_MASK;
         }
-
         castleIndex++;
     }
 }
@@ -139,8 +131,13 @@ uint16_t Board::getDoubleMovePawnPermissions(Color color) {
     return pawnMasks[color] & doublePawnMoveRight;
 }
 
-CastleRights Board::getCastleRights(Color color) {
-    return *castleRight[color];
+int Board::getCastleRights(Color color) const {
+    assert(color == WHITE || color == BLACK);
+    if (color == WHITE) {
+        return castleRights & (WHITE_KING_SIDE_CASTLE_MASK | WHITE_QUEEN_SIDE_CASTLE_MASK);
+    }
+
+    return castleRights & (BLACK_KING_SIDE_CASTLE_MASK | BLACK_QUEEN_SIDE_CASTLE_MASK);
 }
 
 Color Board::getSide() const {
