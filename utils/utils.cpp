@@ -97,6 +97,18 @@ namespace Utils {
         printMoves(pawnMoves);
     }
 
+    void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves) {
+        for (int promoteTo = KNIGHT; promoteTo <= QUEEN; promoteTo++) {
+            moves.push_back({
+                pawnPosition,
+                destination,
+                PROMOTION,
+                static_cast<Piece>(promoteTo)
+
+            });
+        }
+    }
+
 
     void compareFen(std::string &fenGenerated, std::string &fenToCompare) {
         if (fenGenerated == fenToCompare) {

@@ -8,6 +8,10 @@
 
 constexpr int BOARD_WIDTH = 8;
 constexpr int BOARD_HEIGHT = 8;
+constexpr int BLACK_BACK_RANK_THRESHOLD_INDEX = 56;
+constexpr int WHITE_BACK_RANK_THRESHOLD_INDEX = 7;
+constexpr int FINAL_SQUARE_INDEX = 63;
+constexpr int FIRST_SQUARE_INDEX = 0;
 
 /**
  * If Using CLION

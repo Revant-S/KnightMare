@@ -4,7 +4,7 @@
 #include "utils/utils.h"
 
 int main() {
-    std::string startFen = "rn2kbnr/1P1bpppp/B7/p7/2p1p3/2N5/P1P2PPP/3RK1NR w Kkq - 1 13";
+    std::string startFen = "rnbqkbnr/pPp1pppp/8/8/8/8/PP1PpPPP/RNBQKBNR w KQkq - 0 5";
     Board board(startFen);
     // Board board{};
     PreMatchAttackComputation::init();

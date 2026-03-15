@@ -177,109 +177,40 @@ namespace GenerateLegalMove {
         const U64 enemyOccupancies = board.getOccupancies(enemySide);
         const U64 totalOccupancies = board.getOccupancies(BOTH);
         U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
+        const int pawnForwardDisplacement = (side == WHITE) ? BOARD_WIDTH : -BOARD_WIDTH;
 
         std::vector<Move> moves;
 
         while (pawnPositions) {
             const int pawnPosition = Utils::getLSB(pawnPositions);
             Utils::popLSB(pawnPositions);
-
-            U64 pawnAttacks = PreMatchAttackComputation::pawnAttacks[side][pawnPosition];
-            pawnAttacks &= enemyOccupancies;
-
+            U64 pawnAttacks = PreMatchAttackComputation::pawnAttacks[side][pawnPosition] & enemyOccupancies;
             while (pawnAttacks) {
                 const int destination = Utils::getLSB(pawnAttacks);
                 Utils::popLSB(pawnAttacks);
-                if (side == WHITE) {
-                    if (destination >= 56) {
-                        for (int promoteTo = KNIGHT; promoteTo <= QUEEN; promoteTo++) {
-                            moves.push_back({
-                                pawnPosition,
-                                destination,
-                                PROMOTION,
-                                static_cast<Piece>(promoteTo)
-                            });
-                        }
-                    } else {
-                        moves.push_back({pawnPosition, destination});
-                    }
+
+                if (Utils::checkPawnPromotion(side, destination)) {
+                    Utils::populatePromotionMoves(pawnPosition, destination, moves);
                 } else {
-                    if (destination <= 7) {
-                        for (int promoteTo = KNIGHT; promoteTo <= QUEEN; promoteTo++) {
-                            moves.push_back({
-                                pawnPosition,
-                                destination,
-                                PROMOTION,
-                                static_cast<Piece>(promoteTo)
-                            });
-                        }
-                    } else {
-                        moves.push_back({pawnPosition, destination});
-                    }
+                    moves.push_back({pawnPosition, destination});
                 }
             }
-
-            if (side == WHITE) {
-                const int step1 = pawnPosition + BOARD_WIDTH;
-                U64 nextPosition = (static_cast<U64>(1) << step1) & totalOccupancies;
-                // std::cout << "STEP 1 Bhai Kya HO raha hai  " << step1 << "\n";
-                // std::cout << "total Occupancy " << std::bitset<64>(totalOccupancies) << "\n";
-                // std::cout << "old White Pawn Position " << std::bitset<64>(pawnPosition) << "\n";
-                // std::cout << "new White Pawn Position " << std::bitset<64>(nextPosition) << "\n";
-                if (step1 == 57) {
-                    std::cout << std::bitset<64>(nextPosition) << "\n";
-                }
-                if (step1 < 64 && !(nextPosition)) {
-                    std::cout << step1 << "\n";
-                    std::cout << " Promotion is there Bhai PATA NYI " << (step1 >= 56) << "\n";
-                    if (step1 >= 56) {
-                        for (int promoteTo = KNIGHT; promoteTo <= QUEEN; promoteTo++) {
-                            moves.push_back({
-                                pawnPosition,
-                                step1,
-                                PROMOTION,
-                                static_cast<Piece>(promoteTo)
-                            });
-                        }
+            if (const int oneStepForward = pawnPosition + pawnForwardDisplacement; Utils::checkIndexBounds(
+                oneStepForward)) {
+                if (const U64 oneStepBit = (static_cast<U64>(1) << oneStepForward); !(oneStepBit & totalOccupancies)) {
+                    if (Utils::checkPawnPromotion(side, oneStepForward)) {
+                        Utils::populatePromotionMoves(pawnPosition, oneStepForward, moves);
                     } else {
-                        moves.push_back({
-                            pawnPosition,
-                            step1
-                        });
+                        moves.push_back({pawnPosition, oneStepForward});
                     }
-
-                    // 2 steps forward
-                    if (const int step2 = pawnPosition + 2 * BOARD_WIDTH;
-                        pawnPosition / BOARD_WIDTH == 1 && !((static_cast<U64>(1) << step2) & totalOccupancies)) {
-                        moves.push_back(
-                            {
-                                pawnPosition,
-                                step2
+                    if (Utils::checkDoublePawnMoves(pawnPosition, side)) {
+                        if (const int twoStepForwardSquare = pawnPosition + 2 * pawnForwardDisplacement;
+                            Utils::checkIndexBounds(twoStepForwardSquare)) {
+                            if (const U64 twoStepBit = (static_cast<U64>(1) << twoStepForwardSquare); !(
+                                twoStepBit & totalOccupancies)) {
+                                moves.push_back({pawnPosition, twoStepForwardSquare});
                             }
-                        );
-                    }
-                }
-            } else {
-                // 1 step forward
-                const int step1 = pawnPosition - BOARD_WIDTH;
-                U64 nextPosition = static_cast<U64>(1) << step1;
-                if (step1 >= 0 && !nextPosition) {
-                    if (step1 <= 7) {
-                        for (int promoteTo = KNIGHT; promoteTo <= QUEEN; promoteTo++) {
-                            moves.push_back({
-                                pawnPosition,
-                                step1,
-                                PROMOTION,
-                                static_cast<Piece>(promoteTo)
-                            });
                         }
-                    } else {
-                        moves.push_back({pawnPosition, step1});
-                    }
-                    // 2 steps forward
-                    if (const int step2 = pawnPosition - 2 * BOARD_WIDTH;
-                        pawnPosition / BOARD_WIDTH == 6 && !((static_cast<U64>(1) << step2) & totalOccupancies)) {
-                        moves.push_back({pawnPosition, step2});
                     }
                 }
             }
