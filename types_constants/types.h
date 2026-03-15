@@ -25,9 +25,15 @@ enum Direction {
     NORTH, SOUTH, EAST, WEST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST
 };
 
+enum MoveType {
+    SIMPLE, CASTLE, PROMOTION
+};
+
 struct Move {
-    int from;
-    int to; // all the positions where it can attack should be ORed
+    int from = -1;
+    int to = -1;
+    MoveType moveType = SIMPLE;
+    Piece promotionPiece = PAWN;
 };
 
 struct ColorPiece {

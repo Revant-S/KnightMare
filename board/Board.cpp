@@ -6,7 +6,7 @@
 #include "../types_constants/types.h"
 #include <bitset>
 
-Board::Board(std::string fenString) {
+Board::Board(const std::string &fenString) {
     int rank = 7, file = 0;
     int sideIndex = 0;
     for (const unsigned char piece: fenString) {
@@ -26,6 +26,10 @@ Board::Board(std::string fenString) {
                 bitboards[color][boardPiece] |= (static_cast<U64>(1) << boardIndex);
                 occupancies[color] |= (static_cast<U64>(1) << boardIndex);
                 occupancies[BOTH] |= (static_cast<U64>(1) << boardIndex);
+                // if (boardPiece == PAWN && color == WHITE) {
+                //     std::cout << "White pawn bitboard : " << std::bitset<64>(bitboards[color][boardPiece])<<" ";
+                //     std::cout << "Board Index Of White Pawn : " << boardIndex << " \n";
+                // }
                 file++;
             } else {
                 break;
