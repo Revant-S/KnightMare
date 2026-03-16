@@ -2,8 +2,7 @@
 // Created by revant-sinha on 3/8/26.
 //
 
-#include "GenerateLeglMove.h"
-
+#include "GeneratePseudoLegalMove.h"
 #include "../../PreMatchComputations/PreMatchAttackComputation.h"
 #include "../../utils/utils.h"
 
@@ -198,7 +197,11 @@ namespace GenerateLegalMove {
         const Color side = board.getSide();
         const Color enemySide = (side == WHITE) ? BLACK : WHITE;
 
-        const U64 enemyOccupancies = board.getOccupancies(enemySide);
+        U64 enemyOccupancies = board.getOccupancies(enemySide);
+        const int enpassantSquare = board.getEnpassantSquare();
+        if (enpassantSquare != -1) {
+            enemyOccupancies |= 1ULL << enpassantSquare;
+        }
         const U64 totalOccupancies = board.getOccupancies(BOTH);
         U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
         const int pawnForwardDisplacement = (side == WHITE) ? BOARD_WIDTH : -BOARD_WIDTH;
@@ -212,8 +215,13 @@ namespace GenerateLegalMove {
             while (pawnAttacks) {
                 const int destination = Utils::getLSB(pawnAttacks);
                 Utils::popLSB(pawnAttacks);
-
-                if (Utils::checkPawnPromotion(side, destination)) {
+                if (destination == enpassantSquare) {
+                    moves.push_back({
+                        pawnPosition,
+                        destination,
+                        EN_PASSANT
+                    });
+                } else if (Utils::checkPawnPromotion(side, destination)) {
                     Utils::populatePromotionMoves(pawnPosition, destination, moves);
                 } else {
                     moves.push_back({pawnPosition, destination});

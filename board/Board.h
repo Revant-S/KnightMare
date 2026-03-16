@@ -24,7 +24,14 @@ public:
 
     void getAndPrintPawnMovePermissions();
 
-    uint16_t getDoubleMovePawnPermissions(Color color);
+    uint16_t getDoubleMovePawnPermissions(Color color) const;
+
+    void setEnPassantSquare(int squareIndex);
+
+    void clearEnPassantSquare();
+
+    int getEnpassantSquare() const;
+
 
     [[nodiscard]] int getCastleRights(Color color) const;
 
@@ -43,5 +50,6 @@ private:
     uint16_t doublePawnMoveRight = 0;
 
     int castleRights = 0b1111;
+    int enPassantSquare = -1;
 };
 #endif //BOARD_H

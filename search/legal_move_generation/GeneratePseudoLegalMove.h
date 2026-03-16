@@ -2,8 +2,8 @@
 // Created by revant-sinha on 3/8/26.
 //
 
-#ifndef GENERATELEGLMOVE_H
-#define GENERATELEGLMOVE_H
+#ifndef GENERATEPSEUDOLEGALMOVE_H
+#define GENERATEPSEUDOLEGALMOVE_H
 #include "../../types_constants/types.h"
 #include "../../board/Board.h"
 
@@ -21,4 +21,4 @@ namespace GenerateLegalMove {
     std::vector<Move> getPawnPseudoLegalMoves(const Board &board);
 } // GenerateLegalMove
 
-#endif //GENERATELEGLMOVE_H
+#endif //GENERATEPSEUDOLEGALMOVE_H

@@ -14,6 +14,6 @@ add_executable(chess main.cpp
         types_constants/constants.h
         tests/tests.cpp
         tests/tests.h
-        "search/legal_move_generation/GenerateLeglMove.cpp"
-        "search/legal_move_generation/GenerateLeglMove.h"
+        "search/legal_move_generation/GeneratePseudoLegalMove.cpp"
+        "search/legal_move_generation/GeneratePseudoLegalMove.h"
 )

@@ -4,7 +4,7 @@
 
 #include "utils.h"
 #include "../types_constants/constants.h"
-#include "../search/legal_move_generation/GenerateLeglMove.h"
+#include "../search/legal_move_generation/GeneratePseudoLegalMove.h"
 
 namespace Utils {
     void printBitBoard(U64 bitBoard) {
@@ -95,6 +95,9 @@ namespace Utils {
         std::cout << "\n--- Pawn MOVES ---\n";
         auto pawnMoves = GenerateLegalMove::getPawnPseudoLegalMoves(board);
         printMoves(pawnMoves);
+
+        std::cout << "\n --- En passant Square ---\n ";
+        std::cout << board.getEnpassantSquare();
     }
 
     void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves) {

@@ -82,14 +82,13 @@ namespace PreMatchAttackComputation {
         }
     }
 
-    // right now the  forward motion of pawn is also classified as Attacks
     void generatePawnAttacks() {
         for (int square = 0; square < 64; square++) {
             U64 whiteAttacks = static_cast<U64>(0);
             U64 blackAttacks = static_cast<U64>(0);
             auto [rank, file] = Utils::getCoordinates(square);
 
-            // Calculate White Pawn Attacks
+
             for (int direction = NORTH_EAST; direction <= NORTH_WEST; direction++) {
                 const int nextRank = rank + directions[direction].first;
                 const int nextFile = file + directions[direction].second;
@@ -97,17 +96,8 @@ namespace PreMatchAttackComputation {
                     whiteAttacks |= (static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile));
                 }
             }
-            // // one step front
-            // if (rank + 1 < 8) {
-            //     whiteAttacks |= static_cast<U64>(1) << ((rank + 1) * BOARD_WIDTH + file);
-            // }
-            // // two steps forward
-            // if (rank == 1) {
-            //     whiteAttacks |= static_cast<U64>(1) << ((rank + 2) * BOARD_WIDTH + file);
-            // }
             pawnAttacks[WHITE][square] = whiteAttacks;
 
-            // Calculate Black Pawn Attacks
             for (int direction = SOUTH_EAST; direction <= SOUTH_WEST; direction++) {
                 const int nextRank = rank + directions[direction].first;
                 const int nextFile = file + directions[direction].second;
@@ -115,15 +105,6 @@ namespace PreMatchAttackComputation {
                     blackAttacks |= (static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile));
                 }
             }
-
-            // one step front
-            // if (rank - 1 >= 0) {
-            //     blackAttacks |= static_cast<U64>(1) << ((rank - 1) * BOARD_WIDTH + file);
-            // }
-            // // two steps forward
-            // if (rank == 6) {
-            //     blackAttacks |= static_cast<U64>(1) << ((rank - 2) * BOARD_WIDTH + file);
-            // }
             pawnAttacks[BLACK][square] = blackAttacks;
         }
     }

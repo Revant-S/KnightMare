@@ -54,6 +54,15 @@ Board::Board(const std::string &fenString) {
         }
         castleIndex++;
     }
+    int enpassantFenIndex = castleIndex + 1;
+    if (fenString[enpassantFenIndex] != '-') {
+        int squareFile = fenString[enpassantFenIndex] - 'a';
+        std::cout << "ENPASSANT ROW :=" << squareFile << "\n";
+        enpassantFenIndex++;
+        int squareRank = fenString[enpassantFenIndex] - '1';
+        std::cout << "ENPASSANT col :=" << squareRank << "\n";
+        enPassantSquare = squareRank * BOARD_WIDTH + squareFile;
+    }
 }
 
 void Board::toggle_side() {
@@ -124,11 +133,23 @@ void Board::getAndPrintPawnMovePermissions() {
     }
 }
 
-uint16_t Board::getDoubleMovePawnPermissions(Color color) {
-    if (color > BLACK) {
-        return -1;
-    }
+uint16_t Board::getDoubleMovePawnPermissions(Color color) const {
     return pawnMasks[color] & doublePawnMoveRight;
+}
+
+inline void Board::setEnPassantSquare(const int squareIndex) {
+    if (squareIndex > 63 || squareIndex < 0) {
+        return;
+    };
+    enPassantSquare = squareIndex;
+}
+
+inline void Board::clearEnPassantSquare() {
+    enPassantSquare = -1;
+}
+
+int Board::getEnpassantSquare() const {
+    return enPassantSquare;
 }
 
 int Board::getCastleRights(Color color) const {
