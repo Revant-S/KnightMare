@@ -9,8 +9,8 @@ namespace tests {
         int pieceSquare = -1;
 
         for (const auto &move: moves) {
-            attackMap |= (1ULL << move.to); // Turn on the bit for every legal destination
-            pieceSquare = move.from; // Grab the starting square for logging
+            attackMap |= (1ULL << move.to); 
+            pieceSquare = move.from; 
         }
 
         if (pieceSquare != -1) {
