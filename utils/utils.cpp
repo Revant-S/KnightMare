@@ -105,6 +105,7 @@ namespace Utils {
             moves.push_back({
                 pawnPosition,
                 destination,
+                PAWN,
                 PROMOTION,
                 static_cast<Piece>(promoteTo)
 

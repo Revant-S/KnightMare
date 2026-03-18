@@ -16,4 +16,8 @@ add_executable(chess main.cpp
         tests/tests.h
         "search/legal_move_generation/GeneratePseudoLegalMove.cpp"
         "search/legal_move_generation/GeneratePseudoLegalMove.h"
+        search/legal_move_generation/LegalMoveFilter.cpp
+        search/legal_move_generation/LegalMoveFilter.h
+        search/legal_move_generation/MoveFunctions.cpp
+        search/legal_move_generation/MoveFunctions.h
 )

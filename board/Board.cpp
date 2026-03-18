@@ -152,6 +152,44 @@ int Board::getEnpassantSquare() const {
     return enPassantSquare;
 }
 
+void Board::setPieceBitBoard(Color color, Piece piece, U64 newBitBoard) {
+    bitboards[color][piece] = newBitBoard;
+}
+
+void Board::setOccupanciesBitBoard(Color color, U64 newOccupancy) {
+    occupancies[color] = newOccupancy;
+}
+
+void Board::removePiece(const int square, Piece piece, Color color) {
+    const U64 pieceRemovalBitMask = static_cast<U64>(1) << square;
+    bitboards[piece][color] ^= pieceRemovalBitMask;
+    occupancies[color] ^= pieceRemovalBitMask;
+    occupancies[BOTH] ^= pieceRemovalBitMask;
+}
+
+void Board::placePiece(const int square, Piece piece, Color color) {
+    const U64 placeMoveBitMask = static_cast<U64>(1) << square;
+    bitboards[piece][color] |= placeMoveBitMask;
+    occupancies[color] |= placeMoveBitMask;
+    occupancies[BOTH] |= placeMoveBitMask;
+}
+
+ColorPiece Board::getPieceOnTheIndex(const int index) {
+    for (int color = WHITE; color <= BLACK; color++) {
+        for (int piece = PAWN; piece <= KING; piece++) {
+            U64 pieceBitBoard = bitboards[color][piece];
+            U64 checkPositionMask = static_cast<U64>(1) << index;
+            if (checkPositionMask & pieceBitBoard) {
+                return {
+                    static_cast<Color>(color),
+                    static_cast<Piece>(piece)
+                };
+            }
+        }
+    }
+    return {};
+}
+
 int Board::getCastleRights(Color color) const {
     assert(color == WHITE || color == BLACK);
     if (color == WHITE) {

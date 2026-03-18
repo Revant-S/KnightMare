@@ -32,6 +32,16 @@ public:
 
     int getEnpassantSquare() const;
 
+    void setPieceBitBoard(Color color, Piece piece, U64 newBitBoard);
+
+    void setOccupanciesBitBoard(Color color, U64 newOccupancy);
+
+    void removePiece(int square, Piece piece, Color color);
+
+    void placePiece(int square, Piece piece, Color color);
+
+    ColorPiece getPieceOnTheIndex(int index);
+
 
     [[nodiscard]] int getCastleRights(Color color) const;
 

@@ -21,7 +21,8 @@ namespace GenerateLegalMove {
                 Utils::popLSB(pseudoMoves);
                 knightMoves.push_back({
                     knightPosition,
-                    destination
+                    destination,
+                    KNIGHT
                 });
             }
         }
@@ -58,7 +59,11 @@ namespace GenerateLegalMove {
                 while (finalRay) {
                     int destination = Utils::getLSB(finalRay);
                     Utils::popLSB(finalRay);
-                    rookMoves.push_back({rookPosition, destination});
+                    rookMoves.push_back({
+                        rookPosition,
+                        destination,
+                        ROOK
+                    });
                 }
             }
         }
@@ -100,7 +105,8 @@ namespace GenerateLegalMove {
                     Utils::popLSB(finalRay);
                     bishopMoves.push_back({
                         bishopPosition,
-                        destination
+                        destination,
+                        BISHOP
                     });
                 }
             }
@@ -139,7 +145,8 @@ namespace GenerateLegalMove {
                     Utils::popLSB(finalRay);
                     queenMoves.push_back({
                         queenPosition,
-                        destination
+                        destination,
+                        QUEEN
                     });
                 }
             }
@@ -165,26 +172,46 @@ namespace GenerateLegalMove {
             while (pseudoMoves) {
                 const int destination = Utils::getLSB(pseudoMoves);
                 Utils::popLSB(pseudoMoves);
-                kingMoves.push_back({kingPosition, destination});
+                kingMoves.push_back({kingPosition, destination, KING});
             }
 
             if (side == WHITE) {
                 if ((castleRights & WHITE_KING_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & WHITE_KING_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({WHITE_KING_SQUARE, 6, CASTLE_KING_SIDE});
+                    kingMoves.push_back({
+                        WHITE_KING_SQUARE,
+                        WHITE_KING_KING_SIDE_CASTLE_DESTINATION,
+                        KING,
+                        CASTLE_KING_SIDE
+                    });
                 }
                 if ((castleRights & WHITE_QUEEN_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & WHITE_QUEEN_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({WHITE_KING_SQUARE, 2, CASTLE_QUEEN_SIDE});
+                    kingMoves.push_back({
+                        WHITE_KING_SQUARE,
+                        WHITE_KING_QUEEN_SIDE_CASTLE_DESTINATION,
+                        KING,
+                        CASTLE_QUEEN_SIDE
+                    });
                 }
             } else {
                 if ((castleRights & BLACK_KING_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & BLACK_KING_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({BLACK_KING_SQUARE, 62, CASTLE_KING_SIDE});
+                    kingMoves.push_back({
+                        BLACK_KING_SQUARE,
+                        BLACK_KING_KING_SIDE_CASTLE_DESTINATION,
+                        KING,
+                        CASTLE_KING_SIDE
+                    });
                 }
                 if ((castleRights & BLACK_QUEEN_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & BLACK_QUEEN_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({BLACK_KING_SQUARE, 58, CASTLE_QUEEN_SIDE});
+                    kingMoves.push_back({
+                        BLACK_KING_SQUARE,
+                        BLACK_KING_QUEEN_SIDE_CASTLE_DESTINATION,
+                        KING,
+                        CASTLE_QUEEN_SIDE
+                    });
                 }
             }
         }
@@ -219,12 +246,13 @@ namespace GenerateLegalMove {
                     moves.push_back({
                         pawnPosition,
                         destination,
+                        PAWN,
                         EN_PASSANT
                     });
                 } else if (Utils::checkPawnPromotion(side, destination)) {
                     Utils::populatePromotionMoves(pawnPosition, destination, moves);
                 } else {
-                    moves.push_back({pawnPosition, destination});
+                    moves.push_back({pawnPosition, destination, PAWN});
                 }
             }
             if (const int oneStepForward = pawnPosition + pawnForwardDisplacement; Utils::checkIndexBounds(
@@ -233,14 +261,14 @@ namespace GenerateLegalMove {
                     if (Utils::checkPawnPromotion(side, oneStepForward)) {
                         Utils::populatePromotionMoves(pawnPosition, oneStepForward, moves);
                     } else {
-                        moves.push_back({pawnPosition, oneStepForward});
+                        moves.push_back({pawnPosition, oneStepForward, PAWN});
                     }
                     if (Utils::checkDoublePawnMoves(pawnPosition, side)) {
                         if (const int twoStepForwardSquare = pawnPosition + 2 * pawnForwardDisplacement;
                             Utils::checkIndexBounds(twoStepForwardSquare)) {
                             if (const U64 twoStepBit = (static_cast<U64>(1) << twoStepForwardSquare); !(
                                 twoStepBit & totalOccupancies)) {
-                                moves.push_back({pawnPosition, twoStepForwardSquare});
+                                moves.push_back({pawnPosition, twoStepForwardSquare, PAWN});
                             }
                         }
                     }

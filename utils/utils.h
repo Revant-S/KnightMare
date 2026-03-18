@@ -22,6 +22,10 @@ namespace Utils {
 
     bool checkCastlePossibility(Board &board);
 
+    void removePiece(Board &board, int square, Piece piece, Color color);
+
+    void placePiece(Board &board, int square, Piece piece, Color color);
+
     inline bool checkIndexBounds(int index) {
         return (index <= FINAL_SQUARE_INDEX && index >= FIRST_SQUARE_INDEX);
     }

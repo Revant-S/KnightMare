@@ -32,8 +32,10 @@ enum MoveType {
 struct Move {
     int from = -1;
     int to = -1;
+    Piece piece;
     MoveType moveType = SIMPLE;
     Piece promotionPiece = PAWN;
+    bool isCapture = false;
 };
 
 struct ColorPiece {
