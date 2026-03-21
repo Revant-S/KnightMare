@@ -1,6 +1,6 @@
-# KnightMare
+# Chess Engine
 
-A bitboard-based chess engine written in C++. This is a work in progress move generation is done, perft testing is underway, and search/evaluation is next.
+A bitboard-based chess engine written in C++. This is a work in progress — move generation is done, perft testing is underway, and search/evaluation is next.
 
 ---
 
@@ -8,9 +8,9 @@ A bitboard-based chess engine written in C++. This is a work in progress move ge
 
 ### Board Representation
 
-The board is represented using **bitboards**  one 64-bit integer per piece type per color. So `bitboards[WHITE][KNIGHT]` is a single `uint64_t` where each set bit represents a white knight on that square. This makes move generation extremely fast since most operations are just bitwise AND/OR/XOR.
+The board is represented using **bitboards** — one 64-bit integer per piece type per color. So `bitboards[WHITE][KNIGHT]` is a single `uint64_t` where each set bit represents a white knight on that square. This makes move generation extremely fast since most operations are just bitwise AND/OR/XOR.
 
-Alongside the piece bitboards, three occupancy bitboards are maintained one for white, one for black, and one for both combined. These are kept in sync on every `placePiece` and `removePiece` call.
+Alongside the piece bitboards, three occupancy bitboards are maintained — one for white, one for black, and one for both combined. These are kept in sync on every `placePiece` and `removePiece` call.
 
 The board also tracks:
 - Side to move
@@ -33,7 +33,7 @@ Move generation is split into two stages:
 
 **Legal move filtering** (`LegalMoveFilter`) — for each pseudo-legal move, saves board state, makes the move, checks if the king is in check, then restores the board. Only moves that don't leave the king in check survive.
 
-This save/restore pattern uses a `BoardState` struct that snapshots all bitboards, occupancies, castle rights, en passant square, and side. Restoring is just blasting the snapshot back in with `memcpy` (raw arrays — switching to `std::array` is noted as a TODO).
+This save/restore pattern uses a `BoardState` struct that snapshots all bitboards, occupancies, castle rights, en passant square, and side. Bitboards and occupancies are `std::array` so restoring is just a direct assignment.
 
 ### isSquareAttacked
 
@@ -74,7 +74,7 @@ Known perft values are in `types_constants/constants.h` for the starting positio
 
 ## What's next
 
-- [ ] Perft passing for starting position and Kiwipete to depth 5
+- [ ] Perft passing for starting position and Kiwipete
 - [ ] Castle rights update on king/rook moves
 - [ ] Evaluation function
 - [ ] Minimax with alpha-beta pruning
