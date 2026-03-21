@@ -5,10 +5,18 @@
 #ifndef TESTS_H
 #define TESTS_H
 
+#include "../board/Board.h"
 #include "../types_constants/types.h"
 
-namespace  tests {
+
+namespace tests {
     void visualizeMoves(const std::vector<Move> &moves);
+
+    int perft(Board &board, int depth);
+
+    void perftDivide(Board &board, int depth);
+
+    void runPerftSuite(Board &board, const std::vector<PerftResult> &expectedResults, const std::string &suiteName);
 };
 
 

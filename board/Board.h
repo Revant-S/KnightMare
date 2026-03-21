@@ -40,6 +40,15 @@ public:
 
     void placePiece(int square, Piece piece, Color color);
 
+    void makeMove(Move &move, Color color);
+
+    void handleCaptureForMove(Move &move);
+
+    BoardState saveState();
+
+    void unmakeMove(BoardState savedState);
+
+
     ColorPiece getPieceOnTheIndex(int index);
 
 
@@ -48,8 +57,8 @@ public:
     [[nodiscard]] Color getSide() const;
 
 private:
-    U64 bitboards[2][6] = {0};
-    U64 occupancies[3] = {
+    std::array<std::array<U64, 6>, 2> bitboards = {0};
+    std::array<U64, 3> occupancies = {
         static_cast<U64>(0),
         static_cast<U64>(0),
         static_cast<U64>(0)

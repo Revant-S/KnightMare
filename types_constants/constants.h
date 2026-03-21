@@ -26,6 +26,15 @@ constexpr int BLACK_KING_QUEEN_SIDE_CASTLE_DESTINATION = 58;
 constexpr int BLACK_KING_KING_SIDE_CASTLE_DESTINATION = 62;
 constexpr int WHITE_KING_QUEEN_SIDE_CASTLE_DESTINATION = 2;
 constexpr int WHITE_KING_KING_SIDE_CASTLE_DESTINATION = 6;
+// castling rook squares
+constexpr int WHITE_KING_SIDE_ROOK_FROM = 7;
+constexpr int WHITE_KING_SIDE_ROOK_TO = 5;
+constexpr int WHITE_QUEEN_SIDE_ROOK_FROM = 0;
+constexpr int WHITE_QUEEN_SIDE_ROOK_TO = 3;
+constexpr int BLACK_KING_SIDE_ROOK_FROM = 63;
+constexpr int BLACK_KING_SIDE_ROOK_TO = 61;
+constexpr int BLACK_QUEEN_SIDE_ROOK_FROM = 56;
+constexpr int BLACK_QUEEN_SIDE_ROOK_TO = 59;
 constexpr U64 WHITE_KING_SIDE_CASTLE_EMPTY = (1ULL << 5) | (1ULL << 6);
 constexpr U64 WHITE_QUEEN_SIDE_CASTLE_EMPTY = (1ULL << 1) | (1ULL << 2) | (1ULL << 3);
 constexpr U64 BLACK_KING_SIDE_CASTLE_EMPTY = (1ULL << 61) | (1ULL << 62);
@@ -74,5 +83,27 @@ inline std::map<char, ColorPiece> fenEnumMapping = {
 
 inline uint16_t pawnMasks[2] = {0b1111'1111'0000'0000, 0b0000'0000'1111'1111};
 
+
+struct PerftResult {
+    int depth;
+    long long expected;
+};
+
+inline const std::vector<PerftResult> STARTING_POSITION_PERFT = {
+    {1, 20},
+    {2, 400},
+    {3, 8902},
+    {4, 197281},
+    {5, 4865609},
+    {6, 119060324}
+};
+
+inline  const std::vector<PerftResult> KIWIPETE_PERFT = {
+    {1, 48},
+    {2, 2039},
+    {3, 97862},
+    {4, 4085603},
+    {5, 193690690}
+};
 
 #endif //CONSTANTS_H

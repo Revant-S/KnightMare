@@ -34,7 +34,7 @@ struct Move {
     int to = -1;
     Piece piece;
     MoveType moveType = SIMPLE;
-    Piece promotionPiece = PAWN;
+    Piece promoteTo = PAWN;
     bool isCapture = false;
 };
 
@@ -43,5 +43,12 @@ struct ColorPiece {
     Piece piece;
 };
 
+struct BoardState {
+    std::array<std::array<U64, 6>, 2> bitboards;
+    std::array<U64, 3> occupancies;
+    int enPassantSquare;
+    int castleRights;
+    Color side;
+};
 
 #endif //TYPES_H

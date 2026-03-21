@@ -7,7 +7,10 @@
 #include "../../board/Board.h"
 
 namespace LegalMoveFilter {
-    void filterIllegalMoves(Board &board, std::vector<Move>& moves);
+    // std::vector<Move> filterIllegalMoves(Board &board, std::vector<Move> &moves);
+
+    bool canKingCastle(Board &board, Move &move, Color color);
+
     bool isMoveLegal(Board &board, Move &move);
 } // LegalMoveFilter
 

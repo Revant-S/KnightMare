@@ -1,23 +1,17 @@
 #include <bits/stdc++.h>
 #include "board/Board.h"
 #include "PreMatchComputations/PreMatchAttackComputation.h"
-#include "search/legal_move_generation/MoveFunctions.h"
+#include "search/legal_move_generation/GeneratePseudoLegalMove.h"
+
+#include "tests/tests.h"
 #include "utils/utils.h"
 
 int main() {
-    std::string startFen = "rnb1kb1r/pp2pppp/8/1Bp5/8/2P5/P1P3PP/RNBK2NR b kq - 1 9";
-    Board board(startFen);
-    // Board board{};
     PreMatchAttackComputation::init();
-    std::cout << "--- BOARD STATE ---\n";
-    board.print_board();
-    Utils::printCastleRights(board);
-    Utils::printMoves(board);
-    bool flag = MoveFunctions::isKingInCheck(BLACK, board);
-    if (flag) {
-        std::cout << "YES CHECK IS THERE";
-        return 0;
-    }
-    std::cout << "NO ";
-    return 0;
+
+    Board startPos("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    tests::runPerftSuite(startPos, STARTING_POSITION_PERFT, "Starting Position");
+
+    Board kiwipete("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K22 w KQkq -");
+    tests::runPerftSuite(kiwipete, KIWIPETE_PERFT, "Kiwipete");
 }

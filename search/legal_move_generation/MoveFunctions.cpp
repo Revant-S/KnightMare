@@ -4,28 +4,26 @@
 
 #include "MoveFunctions.h"
 
+#include "GeneratePseudoLegalMove.h"
+#include "LegalMoveFilter.h"
 #include "../../PreMatchComputations/PreMatchAttackComputation.h"
 #include "../../utils/utils.h"
 
 namespace MoveFunctions {
-    void handleCaptureForMove(Move &move, Board &board) {
-        Color enemy = board.getSide() == WHITE ? BLACK : WHITE;
-        U64 enemyOccupancy = board.getOccupancies(enemy);
-
-        if (move.moveType == SIMPLE) {
-        }
+    bool isKingInCheck(Color color, Board &board) {
+        const U64 kingBitBoard = board.getPieceBitBoard(KING, color);
+        const int kingIndex = Utils::getLSB(kingBitBoard);
+        return isSquareAttackedByEnemy(color, kingIndex, board);
     }
 
-    bool isKingInCheck(Color color, Board &board) {
-        U64 kingBitBoard = board.getPieceBitBoard(KING, color);
-        int kingIndex = Utils::getLSB(kingBitBoard);
+    bool isSquareAttackedByEnemy(Color color, int squareIndex, Board &board) {
         const Color enemy = (color == WHITE) ? BLACK : WHITE;
         const U64 totalOccupancy = board.getOccupancies(BOTH);
         const U64 friendlyOccupancy = board.getOccupancies(color);
 
-        // straight directions: enemy ROOK or QUEEN
+        // rook/queen check: cast rays in straight directions from squareIndex
         for (int direction = NORTH; direction <= WEST; direction++) {
-            U64 fullRay = PreMatchAttackComputation::rookAttacks[kingIndex][direction];
+            U64 fullRay = PreMatchAttackComputation::rookAttacks[squareIndex][direction];
             U64 blockerRay = fullRay & totalOccupancy;
             U64 finalRay = fullRay;
             if (blockerRay) {
@@ -44,10 +42,10 @@ namespace MoveFunctions {
             }
         }
 
-        // diagonal directions: enemy BISHOP or QUEEN
+        // bishop/queen check: cast rays in diagonal directions from squareIndex
         for (int direction = NORTH_EAST; direction <= SOUTH_WEST; direction++) {
-            U64 fullRay = PreMatchAttackComputation::bishopAttacks[kingIndex][direction - 4];
-            U64 blockerRay = fullRay & totalOccupancy;
+            const U64 fullRay = PreMatchAttackComputation::bishopAttacks[squareIndex][direction - 4];
+            const U64 blockerRay = fullRay & totalOccupancy;
             U64 finalRay = fullRay;
             if (blockerRay) {
                 int nearestBlocker = (direction == NORTH_EAST || direction == NORTH_WEST)
@@ -65,8 +63,8 @@ namespace MoveFunctions {
             }
         }
 
-        // pretend to be knight
-        U64 knightAttacks = PreMatchAttackComputation::knightAttacks[kingIndex];
+        // knight check: see if any enemy knight can jump to squareIndex
+        U64 knightAttacks = PreMatchAttackComputation::knightAttacks[squareIndex];
         while (knightAttacks) {
             const int sq = Utils::getLSB(knightAttacks);
             Utils::popLSB(knightAttacks);
@@ -75,10 +73,9 @@ namespace MoveFunctions {
                 return true;
         }
 
-        // pretend to be pawn
-        // use OUR color's pawn attacks, squares our pawn would attack FROM kingIndex
-        // are exactly where an enemy pawn would need to sit to attack us
-        U64 pawnAttacks = PreMatchAttackComputation::pawnAttacks[color][kingIndex];
+        // pawn check: use our color's pawn attack mask from squareIndex —
+        // those are exactly the squares an enemy pawn would attack us from
+        U64 pawnAttacks = PreMatchAttackComputation::pawnAttacks[color][squareIndex];
         while (pawnAttacks) {
             const int sq = Utils::getLSB(pawnAttacks);
             Utils::popLSB(pawnAttacks);
@@ -87,8 +84,8 @@ namespace MoveFunctions {
                 return true;
         }
 
-        // king attacks (prevents adjacent kings)
-        U64 kingAttacks = PreMatchAttackComputation::kingAttacks[kingIndex];
+        // king check : if attacked by king at that position
+        U64 kingAttacks = PreMatchAttackComputation::kingAttacks[squareIndex];
         while (kingAttacks) {
             const int sq = Utils::getLSB(kingAttacks);
             Utils::popLSB(kingAttacks);
@@ -100,12 +97,18 @@ namespace MoveFunctions {
         return false;
     }
 
+    std::vector<Move> getAllLegalMoves(Board &board) {
+        auto allPseudolegalMoves = GeneratePseudoLegalMove::getAllPseudoLegalMoves(board);
+        std::vector<Move> allLegalMoves = {};
+        for (auto &pieceMoves: allPseudolegalMoves) {
+            for (Move &move: pieceMoves) {
+                if (LegalMoveFilter::isMoveLegal(board, move)) {
+                    allLegalMoves.push_back(move);
+                }
+            }
 
-    void makeMove(Move &move, Board &board) {
-        Color color = board.getSide();
-        if (move.moveType == CASTLE_KING_SIDE || move.moveType == CASTLE_QUEEN_SIDE) {
         }
-        board.removePiece(move.from, move.piece, color);
-        board.placePiece(move.to, move.piece, color);
+
+        return allLegalMoves;
     }
 } // MoveFunctions

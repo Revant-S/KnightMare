@@ -1,7 +1,3 @@
-//
-// Created by revant-sinha on 3/6/26.
-//
-
 #ifndef UTILS_H
 #define UTILS_H
 #include "../board/Board.h"
@@ -10,35 +6,35 @@
 namespace Utils {
     void printBitBoard(U64 bitBoard);
 
-    void compareFen(std::string &fenGenerated, std::string &fenToCompare);
+    void compareFen(const std::string &fenGenerated, const std::string &fenToCompare);
 
     SquareCoords getCoordinates(int square);
 
+    std::string squareToString(int square);
+
+    std::string moveToString(const Move &move);
+
+    void printMoves(std::vector<Move> &moves);
+
+    void printAllPseudoLegalMoves(Board &board);
+
     void printCastleRights(Board &board);
 
-    void printMoves(Board &board);
-
     void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves);
-
-    bool checkCastlePossibility(Board &board);
-
-    void removePiece(Board &board, int square, Piece piece, Color color);
-
-    void placePiece(Board &board, int square, Piece piece, Color color);
 
     inline bool checkIndexBounds(int index) {
         return (index <= FINAL_SQUARE_INDEX && index >= FIRST_SQUARE_INDEX);
     }
 
     inline bool checkPawnPromotion(Color side, int nextIndex) {
-        return (side == WHITE && nextIndex >= BLACK_BACK_RANK_THRESHOLD_INDEX) || (
-                   side == BLACK && nextIndex <= WHITE_BACK_RANK_THRESHOLD_INDEX);
+        return (side == WHITE && nextIndex >= BLACK_BACK_RANK_THRESHOLD_INDEX) ||
+               (side == BLACK && nextIndex <= WHITE_BACK_RANK_THRESHOLD_INDEX);
     }
 
     inline bool checkDoublePawnMoves(int index, Color side) {
-        return (side == WHITE && index / BOARD_WIDTH == 1) || (side == BLACK && index / BOARD_WIDTH == 6);
+        return (side == WHITE && index / BOARD_WIDTH == 1) ||
+               (side == BLACK && index / BOARD_WIDTH == 6);
     }
-
 
     inline int getLSB(const U64 bb) {
         assert(bb != 0);

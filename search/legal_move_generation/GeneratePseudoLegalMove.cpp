@@ -6,23 +6,28 @@
 #include "../../PreMatchComputations/PreMatchAttackComputation.h"
 #include "../../utils/utils.h"
 
-namespace GenerateLegalMove {
+namespace GeneratePseudoLegalMove {
     std::vector<Move> getKnightPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
-        U64 friendlyOccupancy = board.getOccupancies(side);
+        const U64 friendlyOccupancy = board.getOccupancies(side);
         U64 knightPositions = board.getPieceBitBoard(KNIGHT, side);
+        // std::cout << "side: " << side << "\n";
+        // std::cout << "knightPositions: " << knightPositions << "\n";
         std::vector<Move> knightMoves;
         while (knightPositions) {
-            int knightPosition = Utils::getLSB(knightPositions);
+            const int knightPosition = Utils::getLSB(knightPositions);
             Utils::popLSB(knightPositions);
-            U64 pseudoMoves = (PreMatchAttackComputation::knightAttacks[knightPosition] & ~friendlyOccupancy);
-            while (pseudoMoves) {
-                int destination = Utils::getLSB(pseudoMoves);
-                Utils::popLSB(pseudoMoves);
+            U64 attacks = PreMatchAttackComputation::knightAttacks[knightPosition] & ~friendlyOccupancy;
+            // std::cout << PreMatchAttackComputation::knightAttacks[knightPosition] << "\n";
+            while (attacks) {
+                const int destination = Utils::getLSB(attacks);
+
+                Utils::popLSB(attacks);
                 knightMoves.push_back({
                     knightPosition,
                     destination,
-                    KNIGHT
+                    KNIGHT,
+                    SIMPLE
                 });
             }
         }
@@ -220,7 +225,7 @@ namespace GenerateLegalMove {
     }
 
 
-    std::vector<Move> getPawnPseudoLegalMoves(const Board &board) {
+    std::vector<Move> getPawnPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
         const Color enemySide = (side == WHITE) ? BLACK : WHITE;
 
@@ -277,5 +282,16 @@ namespace GenerateLegalMove {
         }
 
         return moves;
+    }
+
+    std::vector<std::vector<Move> > getAllPseudoLegalMoves(Board &board) {
+        return {
+            getPawnPseudoLegalMoves(board),
+            getKnightPseudoLegalMoves(board),
+            getBishopPseudoLegalMoves(board),
+            getRookPseudoLegalMoves(board),
+            getQueenPseudoLegalMoves(board),
+            getKingPseudoLegalMoves(board),
+        };
     }
 } // GenerateLegalMove

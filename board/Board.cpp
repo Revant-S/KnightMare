@@ -101,7 +101,7 @@ void Board::print_board() const {
 }
 
 U64 Board::getPieceBitBoard(const Piece piece, const Color color) const {
-    if (piece < PAWN || piece > KING || color < WHITE || color > BLACK) {
+    if (piece > KING || color > BLACK) {
         return static_cast<U64>(0);
     }
     return bitboards[color][piece];
@@ -162,14 +162,14 @@ void Board::setOccupanciesBitBoard(Color color, U64 newOccupancy) {
 
 void Board::removePiece(const int square, Piece piece, Color color) {
     const U64 pieceRemovalBitMask = static_cast<U64>(1) << square;
-    bitboards[piece][color] ^= pieceRemovalBitMask;
+    bitboards[color][piece] ^= pieceRemovalBitMask;
     occupancies[color] ^= pieceRemovalBitMask;
     occupancies[BOTH] ^= pieceRemovalBitMask;
 }
 
 void Board::placePiece(const int square, Piece piece, Color color) {
     const U64 placeMoveBitMask = static_cast<U64>(1) << square;
-    bitboards[piece][color] |= placeMoveBitMask;
+    bitboards[color][piece] |= placeMoveBitMask;
     occupancies[color] |= placeMoveBitMask;
     occupancies[BOTH] |= placeMoveBitMask;
 }
@@ -190,8 +190,64 @@ ColorPiece Board::getPieceOnTheIndex(const int index) {
     return {};
 }
 
+void Board::handleCaptureForMove(Move &move) {
+    Color enemy = (side == WHITE) ? BLACK : WHITE;
+    U64 enemyOccupancy = occupancies[enemy];
+    ColorPiece pieceColor = getPieceOnTheIndex(move.to);
+    U64 destinationBitMask = static_cast<U64>(1) << move.to;
+    MoveType moveType = move.moveType;
+    if (moveType == SIMPLE || moveType == PROMOTION) {
+        if (destinationBitMask & enemyOccupancy) {
+            removePiece(move.to, pieceColor.piece, pieceColor.color);
+        }
+        return;
+    }
+
+    if (moveType == EN_PASSANT) {
+        int removeSquareIndex = enemy == WHITE ? enPassantSquare + 8 : enPassantSquare - 8;
+        removePiece(removeSquareIndex, PAWN, enemy);
+    }
+}
+
+BoardState Board::saveState() {
+    return {
+        bitboards,
+        occupancies,
+        enPassantSquare,
+        castleRights,
+        side
+    };
+}
+
+void Board::unmakeMove(const BoardState savedState) {
+    bitboards = savedState.bitboards;
+    occupancies = savedState.occupancies;
+    side = savedState.side;
+    enPassantSquare = savedState.enPassantSquare;
+    castleRights = savedState.castleRights;
+}
+
+void Board::makeMove(Move &move, Color color) {
+    handleCaptureForMove(move);
+    removePiece(move.from, move.piece, color);
+    placePiece(move.to, move.piece, color);
+
+    if (move.moveType == CASTLE_KING_SIDE || move.moveType == CASTLE_QUEEN_SIDE) {
+        int rookFrom, rookTo;
+        if (move.moveType == CASTLE_KING_SIDE) {
+            rookFrom = (color == WHITE) ? WHITE_KING_SIDE_ROOK_FROM : BLACK_KING_SIDE_ROOK_FROM;
+            rookTo = (color == WHITE) ? WHITE_KING_SIDE_ROOK_TO : BLACK_KING_SIDE_ROOK_TO;
+        } else {
+            rookFrom = (color == WHITE) ? WHITE_QUEEN_SIDE_ROOK_FROM : BLACK_QUEEN_SIDE_ROOK_FROM;
+            rookTo = (color == WHITE) ? WHITE_QUEEN_SIDE_ROOK_TO : BLACK_QUEEN_SIDE_ROOK_TO;
+        }
+        removePiece(rookFrom, ROOK, color);
+        placePiece(rookTo, ROOK, color);
+    }
+}
+
 int Board::getCastleRights(Color color) const {
-    assert(color == WHITE || color == BLACK);
+    if (color != WHITE && color != BLACK) return -1;
     if (color == WHITE) {
         return castleRights & (WHITE_KING_SIDE_CASTLE_MASK | WHITE_QUEEN_SIDE_CASTLE_MASK);
     }

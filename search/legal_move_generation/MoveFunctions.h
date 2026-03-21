@@ -8,9 +8,11 @@
 #include "../../types_constants/types.h"
 
 namespace MoveFunctions {
-    void makeMove(Move &move, Board &board);
-
     bool isKingInCheck(Color color, Board &board);
+
+    bool isSquareAttackedByEnemy(Color color, int squareIndex, Board &board);
+
+    std::vector<Move> getAllLegalMoves(Board &board);
 } // MoveFunctions
 
 #endif //MOVEFUNCTIONS_H

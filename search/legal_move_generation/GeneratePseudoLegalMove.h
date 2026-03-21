@@ -7,7 +7,7 @@
 #include "../../types_constants/types.h"
 #include "../../board/Board.h"
 
-namespace GenerateLegalMove {
+namespace GeneratePseudoLegalMove {
     std::vector<Move> getKnightPseudoLegalMoves(Board &board);
 
     std::vector<Move> getRookPseudoLegalMoves(Board &board);
@@ -18,7 +18,9 @@ namespace GenerateLegalMove {
 
     std::vector<Move> getKingPseudoLegalMoves(Board &board);
 
-    std::vector<Move> getPawnPseudoLegalMoves(const Board &board);
+    std::vector<Move> getPawnPseudoLegalMoves(Board &board);
+
+    std::vector<std::vector<Move> > getAllPseudoLegalMoves(Board &board);
 } // GenerateLegalMove
 
 #endif //GENERATEPSEUDOLEGALMOVE_H
