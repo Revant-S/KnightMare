@@ -68,7 +68,7 @@ Perft (performance test) is used to verify move generation correctness. It walks
 runPerftSuite(board, STARTING_POSITION_PERFT, "Starting Position");
 ```
 
-If a depth fails, it automatically runs `perftDivide` which prints per-move node counts. You compare those against the published values on the Chess Programming Wiki to isolate exactly which move is wrong.
+If a depth fails,run `perftDivide` which prints per-move node counts. You compare those against the published values on the Chess Programming Wiki to isolate exactly which move is wrong.
 
 Known perft values are in `types_constants/constants.h` for the starting position and Kiwipete (a position specifically designed to stress-test castling and en passant).
 
