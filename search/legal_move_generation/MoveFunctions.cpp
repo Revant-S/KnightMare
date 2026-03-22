@@ -73,7 +73,7 @@ namespace MoveFunctions {
                 return true;
         }
 
-        // pawn check: use our color's pawn attack mask from squareIndex —
+        // pawn check: use our color's pawn attack mask from sq uareIndex —
         // those are exactly the squares an enemy pawn would attack us from
         U64 pawnAttacks = PreMatchAttackComputation::pawnAttacks[color][squareIndex];
         while (pawnAttacks) {
@@ -100,15 +100,19 @@ namespace MoveFunctions {
     std::vector<Move> getAllLegalMoves(Board &board) {
         auto allPseudolegalMoves = GeneratePseudoLegalMove::getAllPseudoLegalMoves(board);
         std::vector<Move> allLegalMoves = {};
+        // int count = 0;
         for (auto &pieceMoves: allPseudolegalMoves) {
             for (Move &move: pieceMoves) {
-                if (LegalMoveFilter::isMoveLegal(board, move)) {
+                bool legal = LegalMoveFilter::isMoveLegal(board, move);
+                // if (!legal && board.getSide() == BLACK) {
+                //     std::cout << "REJECTED: " << Utils::moveToString(move)
+                //               << " piece=" << move.piece << "\n";
+                // }
+                if (legal) {
                     allLegalMoves.push_back(move);
                 }
             }
-
         }
-
         return allLegalMoves;
     }
 } // MoveFunctions

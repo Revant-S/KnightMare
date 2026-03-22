@@ -42,7 +42,7 @@ namespace tests {
 
     void perftDivide(Board &board, int depth) {
         auto allLegalMoves = MoveFunctions::getAllLegalMoves(board);
-        // for (auto &){}
+
         for (auto &move: allLegalMoves) {
             // std::cout << Utils::moveToString(move) << "\n";
             BoardState saved = board.saveState();

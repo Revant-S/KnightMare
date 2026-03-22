@@ -11,8 +11,8 @@ namespace GeneratePseudoLegalMove {
         const Color side = board.getSide();
         const U64 friendlyOccupancy = board.getOccupancies(side);
         U64 knightPositions = board.getPieceBitBoard(KNIGHT, side);
-        // std::cout << "side: " << side << "\n";
-        // std::cout << "knightPositions: " << knightPositions << "\n";
+        // std::cout << "generating knights for side=" << side
+        //         << " positions=" << knightPositions << "\n";
         std::vector<Move> knightMoves;
         while (knightPositions) {
             const int knightPosition = Utils::getLSB(knightPositions);

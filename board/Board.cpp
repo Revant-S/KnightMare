@@ -177,17 +177,13 @@ void Board::placePiece(const int square, Piece piece, Color color) {
 ColorPiece Board::getPieceOnTheIndex(const int index) {
     for (int color = WHITE; color <= BLACK; color++) {
         for (int piece = PAWN; piece <= KING; piece++) {
-            U64 pieceBitBoard = bitboards[color][piece];
             U64 checkPositionMask = static_cast<U64>(1) << index;
-            if (checkPositionMask & pieceBitBoard) {
-                return {
-                    static_cast<Color>(color),
-                    static_cast<Piece>(piece)
-                };
+            if (checkPositionMask & bitboards[color][piece]) {
+                return {static_cast<Color>(color), static_cast<Piece>(piece)};
             }
         }
     }
-    return {};
+    return {BOTH, PAWN}; // BOTH as sentinel — never matches WHITE or BLACK
 }
 
 void Board::handleCaptureForMove(Move &move) {

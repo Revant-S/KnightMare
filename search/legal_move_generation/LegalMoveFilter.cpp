@@ -30,32 +30,31 @@ namespace LegalMoveFilter {
     }
 
 
-    // std::vector<Move> filterIllegalMoves(Board &board, std::vector<Move> &moves) {
-    //     std::vector<Move> legalMoves;
-    //     Color side = board.getSide();
-    //     for (auto &move: moves) {
-    //         if (move.moveType == CASTLE_KING_SIDE || move.moveType == CASTLE_QUEEN_SIDE) {
-    //             if (!canKingCastle(board, move, side)) continue;
-    //         }
-    //         BoardState saved = board.saveState();
-    //         board.makeMove(move, board.getSide());
-    //         if (!MoveFunctions::isKingInCheck(board.getSide(), board))
-    //             legalMoves.push_back(move);
-    //         board.unmakeMove(saved);
-    //     }
-    //     return legalMoves;
-    // }
-
     bool isMoveLegal(Board &board, Move &move) {
         Color side = board.getSide();
         if (move.moveType == CASTLE_KING_SIDE || move.moveType == CASTLE_QUEEN_SIDE) {
             return canKingCastle(board, move, side);
         }
-        BoardState saved = board.saveState();
-        board.makeMove(move, board.getSide());
-        bool isLegal = false;
-        if (!MoveFunctions::isKingInCheck(board.getSide(), board))
-            isLegal = true;
+        const BoardState saved = board.saveState();
+
+        // if (move.piece == KNIGHT && side == BLACK) {
+        //     // std::cout << "before makeMove: " << Utils::moveToString(move) << "\n";
+        // }
+
+        board.makeMove(move, side);
+
+        if (move.piece == KNIGHT && side == BLACK) {
+            // std::cout << "after makeMove, checking king\n";
+            U64 kingBB = board.getPieceBitBoard(KING, BLACK);
+            // std::cout << "black king bitboard: " << kingBB << "\n"; // if 0, getLSB will assert
+        }
+
+        bool isLegal = !MoveFunctions::isKingInCheck(board.getSide(), board);
+
+        // if (move.piece == KNIGHT && side == BLACK) {
+        //     std::cout << "isLegal: " << isLegal << "\n";
+        // }
+
         board.unmakeMove(saved);
         return isLegal;
     }
