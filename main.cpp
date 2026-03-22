@@ -5,7 +5,6 @@
 
 int main() {
     PreMatchAttackComputation::init();
-
     Board startPos;
     tests::runPerftSuite(startPos, STARTING_POSITION_PERFT, "Starting Position");
     Board kiwiBoard(KIWIPETE_PERFT_START_FEN);

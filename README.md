@@ -1,6 +1,8 @@
-# Chess Engine
+# KNIGHTMARE
 
-A bitboard-based chess engine written in C++. This is a work in progress — move generation is done, perft testing is underway, and search/evaluation is next.
+<img src="./logo.png">
+
+A chess engine written in C++ just for fun and to learn. This is a work in progress :— move generation is done, perft testing is underway, and search/evaluation is next.
 
 ---
 
