@@ -223,14 +223,33 @@ void Board::unmakeMove(const BoardState savedState) {
     castleRights = savedState.castleRights;
 }
 
+void Board::clearALlCastleRightsOf(Color color) {
+    if (color == WHITE) {
+        // clear white king + queen side (bits 0 and 1)
+        castleRights &= ~0b0011;
+    } else if (color == BLACK) {
+        // clear black king + queen side (bits 2 and 3)
+        castleRights &= ~0b1100;
+    }
+}
+
 void Board::makeMove(Move &move, Color color) {
+    clearEnPassantSquare();
     handleCaptureForMove(move);
     removePiece(move.from, move.piece, color);
     placePiece(move.to, move.piece, color);
+    MoveType moveType = move.moveType;
+    if (move.piece == KING) {
+        clearALlCastleRightsOf(color);
+    }
+    if (moveType == DOUBLE_PAWN_MOVE) {
+        setEnPassantSquare(color == WHITE ? move.to - BOARD_WIDTH : move.to + BOARD_WIDTH);
+        return;
+    }
 
-    if (move.moveType == CASTLE_KING_SIDE || move.moveType == CASTLE_QUEEN_SIDE) {
+    if (moveType == CASTLE_KING_SIDE || moveType == CASTLE_QUEEN_SIDE) {
         int rookFrom, rookTo;
-        if (move.moveType == CASTLE_KING_SIDE) {
+        if (moveType == CASTLE_KING_SIDE) {
             rookFrom = (color == WHITE) ? WHITE_KING_SIDE_ROOK_FROM : BLACK_KING_SIDE_ROOK_FROM;
             rookTo = (color == WHITE) ? WHITE_KING_SIDE_ROOK_TO : BLACK_KING_SIDE_ROOK_TO;
         } else {

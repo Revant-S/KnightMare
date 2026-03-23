@@ -106,6 +106,15 @@ inline const std::vector<PerftResult> KIWIPETE_PERFT = {
     {5, 193690690}
 };
 
+inline const std::array<std::string, 6> moveTypeString = {
+    "SIMPLE",
+    "PROMOTION",
+    "CASTLE_KING_SIDE",
+    "CASTLE_QUEEN_SIDE",
+    "EN_PASSANT",
+    "DOUBLE_PAWN_MOVE"
+};
+
 inline std::string NORMAL_START_POSITION_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 inline std::string KIWIPETE_PERFT_START_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 

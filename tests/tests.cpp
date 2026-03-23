@@ -50,7 +50,7 @@ namespace tests {
             board.toggle_side();
             int nodes = perft(board, depth - 1);
             board.unmakeMove(saved);
-            std::cout << Utils::moveToString(move) << ": " << nodes << "\n";
+            std::cout << Utils::moveToString(move) << ": " << nodes << " " << moveTypeString[move.moveType] << "\n";
         }
     }
 

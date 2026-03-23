@@ -73,11 +73,12 @@ namespace Utils {
         if (black & BLACK_QUEEN_SIDE_CASTLE_MASK) std::cout << "Black can castle queenside\n";
     }
 
-    void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves) {
+    void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves, Color side) {
         for (int promoteTo = KNIGHT; promoteTo <= QUEEN; promoteTo++) {
             moves.push_back({
                 pawnPosition,
                 destination,
+                side,
                 PAWN,
                 PROMOTION,
                 static_cast<Piece>(promoteTo)

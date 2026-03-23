@@ -26,12 +26,13 @@ enum Direction {
 };
 
 enum MoveType {
-    SIMPLE, PROMOTION, CASTLE_KING_SIDE, CASTLE_QUEEN_SIDE, EN_PASSANT
+    SIMPLE, PROMOTION, CASTLE_KING_SIDE, CASTLE_QUEEN_SIDE, EN_PASSANT, DOUBLE_PAWN_MOVE
 };
 
 struct Move {
     int from = -1;
     int to = -1;
+    Color colorOfPieceToMove;
     Piece piece;
     MoveType moveType = SIMPLE;
     Piece promoteTo = PAWN;

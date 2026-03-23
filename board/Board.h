@@ -48,6 +48,9 @@ public:
 
     void unmakeMove(BoardState savedState);
 
+    void clearALlCastleRightsOf(Color color);
+
+    void clearCastleRight(Color color , Piece piece);
 
     ColorPiece getPieceOnTheIndex(int index);
 
@@ -68,7 +71,7 @@ private:
     int boardHeight = ::BOARD_HEIGHT;
     uint16_t doublePawnMoveRight = 0;
 
-    int castleRights = 0b1111;
+    int castleRights = 0b1111; // black queen | black king white queen white king
     int enPassantSquare = -1;
 };
 #endif //BOARD_H

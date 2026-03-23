@@ -6,8 +6,10 @@
 int main() {
     PreMatchAttackComputation::init();
     Board startPos;
-    // tests::runPerftSuite(startPos, STARTING_POSITION_PERFT, "Starting Position");
-    Board kiwiBoard(KIWIPETE_PERFT_START_FEN);
+    tests::runPerftSuite(startPos, STARTING_POSITION_PERFT, "Starting Position");
+    // tests::perftDivide(startPos, 5);
+    // Board kiwiBoard(KIWIPETE_PERFT_START_FEN);
     // tests::runPerftSuite(kiwiBoard, KIWIPETE_PERFT, "KIWIPETE Position");
     // tests::perftDivide(kiwiBoard, 2);
 }
+

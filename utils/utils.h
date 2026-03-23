@@ -20,7 +20,7 @@ namespace Utils {
 
     void printCastleRights(Board &board);
 
-    void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves);
+    void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves, Color side);
 
     inline bool checkIndexBounds(int index) {
         return (index <= FINAL_SQUARE_INDEX && index >= FIRST_SQUARE_INDEX);
