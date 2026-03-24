@@ -11,24 +11,32 @@
 namespace LegalMoveFilter {
     bool canKingCastle(Board &board, Move &move, Color color) {
         const MoveType moveType = move.moveType;
-        U64 positionsToCheck = (color == WHITE
-                                    ? (moveType == CASTLE_KING_SIDE
-                                           ? WHITE_KING_SIDE_CASTLE_EMPTY
-                                           : WHITE_QUEEN_SIDE_CASTLE_EMPTY)
-                                    : (moveType == CASTLE_KING_SIDE
-                                           ? BLACK_KING_SIDE_CASTLE_EMPTY
-                                           : BLACK_QUEEN_SIDE_CASTLE_EMPTY
-                                    ));
-        while (positionsToCheck) {
-            const int position = Utils::getLSB(positionsToCheck);
-            Utils::popLSB(positionsToCheck);
-            if (MoveFunctions::isSquareAttackedByEnemy(color, position, board)) {
+        U64 emptySquares = (color == WHITE
+                                ? (moveType == CASTLE_KING_SIDE
+                                       ? WHITE_KING_SIDE_CASTLE_EMPTY
+                                       : WHITE_QUEEN_SIDE_CASTLE_EMPTY)
+                                : (moveType == CASTLE_KING_SIDE
+                                       ? BLACK_KING_SIDE_CASTLE_EMPTY
+                                       : BLACK_QUEEN_SIDE_CASTLE_EMPTY));
+
+        if (emptySquares & board.getOccupancies(BOTH)) return false;
+
+        U64 safeSquares = (color == WHITE
+                               ? (moveType == CASTLE_KING_SIDE
+                                      ? WHITE_KING_SIDE_CASTLE_SAFE
+                                      : WHITE_QUEEN_SIDE_CASTLE_SAFE)
+                               : (moveType == CASTLE_KING_SIDE
+                                      ? BLACK_KING_SIDE_CASTLE_SAFE
+                                      : BLACK_QUEEN_SIDE_CASTLE_SAFE));
+
+        while (safeSquares) {
+            const int sq = Utils::getLSB(safeSquares);
+            Utils::popLSB(safeSquares);
+            if (MoveFunctions::isSquareAttackedByEnemy(color, sq, board))
                 return false;
-            }
         }
         return true;
     }
-
 
     bool isMoveLegal(Board &board, Move &move) {
         Color side = board.getSide();

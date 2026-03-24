@@ -1,6 +1,9 @@
 #include <vector>
 #include <iostream>
-
+#include <cstdio>
+#include <string>
+#include <map>
+#include <sstream>
 #include "../search/legal_move_generation/MoveFunctions.h"
 #include "../types_constants/types.h"
 #include "../utils/utils.h"
@@ -76,5 +79,67 @@ namespace tests {
         }
 
         std::cout << "All depths passed.\n";
+    }
+
+
+    std::map<std::string, int> getStockfishPerft(const std::string &fen, int depth) {
+        std::ofstream cmdFile("/tmp/sf_commands.txt");
+        cmdFile << "position fen " << fen << "\n";
+        cmdFile << "go perft " << depth << "\n";
+        cmdFile << "quit\n";
+        cmdFile.close();
+        FILE *sf = popen("stockfish < /tmp/sf_commands.txt", "r");
+        if (!sf) {
+            std::cerr << "Failed to open stockfish\n";
+            return {};
+        }
+
+        std::map<std::string, int> results;
+        char line[256];
+        while (fgets(line, sizeof(line), sf)) {
+            std::string s(line);
+            auto colonPos = s.find(": ");
+            if (colonPos != std::string::npos && s.find("Nodes") == std::string::npos) {
+                std::string move = s.substr(0, colonPos);
+                int count = std::stoi(s.substr(colonPos + 2));
+                results[move] = count;
+            }
+            if (s.find("Nodes searched") != std::string::npos) break;
+        }
+
+        pclose(sf);
+        return results;
+    }
+    void compareWithStockfish(Board &board, const std::string &fen, int depth) {
+        auto sfResults = getStockfishPerft(fen, depth);
+        std::map<std::string, int> myResults;
+        for (auto &move: MoveFunctions::getAllLegalMoves(board)) {
+            BoardState saved = board.saveState();
+            board.makeMove(move, board.getSide());
+            board.toggle_side();
+            int nodes = tests::perft(board, depth - 1);
+            board.unmakeMove(saved);
+            myResults[Utils::moveToString(move)] = nodes;
+        }
+        std::cout << "\n=== Comparison at depth " << depth << " ===\n";
+        bool found = false;
+        for (auto &[move, sfCount]: sfResults) {
+            int myCount = myResults.contains(move) ? myResults[move] : -1;
+            if (myCount != sfCount) {
+                std::cout << "MISMATCH: " << move
+                        << "  yours=" << myCount
+                        << "  stockfish=" << sfCount
+                        << "  delta=" << (myCount - sfCount) << "\n";
+                found = true;
+            }
+        }
+        for (auto &[move, myCount]: myResults) {
+            if (!sfResults.count(move)) {
+                std::cout << "EXTRA MOVE (not in stockfish): " << move
+                        << " count=" << myCount << "\n";
+                found = true;
+            }
+        }
+        if (!found) std::cout << "All moves match!\n";
     }
 }

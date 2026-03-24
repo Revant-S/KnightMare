@@ -233,18 +233,57 @@ void Board::clearALlCastleRightsOf(Color color) {
     }
 }
 
+void Board::clearCastleRight(Color color, Piece piece) {
+    assert(piece == KING || piece == QUEEN); // KING = king-side, QUEEN = queen-side
+
+    if (color == WHITE) {
+        if (piece == KING) {
+            castleRights &= ~WHITE_KING_SIDE_CASTLE_MASK;
+        } else {
+            // QUEEN side
+            castleRights &= ~WHITE_QUEEN_SIDE_CASTLE_MASK;
+        }
+    } else {
+        // BLACK
+        if (piece == KING) {
+            castleRights &= ~BLACK_KING_SIDE_CASTLE_MASK;
+        } else {
+            // QUEEN side
+            castleRights &= ~BLACK_QUEEN_SIDE_CASTLE_MASK;
+        }
+    }
+}
+
 void Board::makeMove(Move &move, Color color) {
     clearEnPassantSquare();
     handleCaptureForMove(move);
     removePiece(move.from, move.piece, color);
     placePiece(move.to, move.piece, color);
     MoveType moveType = move.moveType;
+    Piece piece = move.piece;
+    Color moveColor = move.colorOfPieceToMove;
     if (move.piece == KING) {
         clearALlCastleRightsOf(color);
     }
     if (moveType == DOUBLE_PAWN_MOVE) {
         setEnPassantSquare(color == WHITE ? move.to - BOARD_WIDTH : move.to + BOARD_WIDTH);
         return;
+    }
+
+    if (piece == ROOK) {
+        if (moveColor == WHITE) {
+            if (move.from == WHITE_QUEEN_SIDE_ROOK_FROM) {
+                clearCastleRight(WHITE, QUEEN);
+            } else if (move.from == WHITE_KING_SIDE_ROOK_FROM) {
+                clearCastleRight(WHITE, KING);
+            }
+        } else {
+            if (move.from == BLACK_QUEEN_SIDE_ROOK_FROM) {
+                clearCastleRight(BLACK, QUEEN);
+            } else if (move.from == BLACK_KING_SIDE_ROOK_FROM) {
+                clearCastleRight(BLACK, KING);
+            }
+        }
     }
 
     if (moveType == CASTLE_KING_SIDE || moveType == CASTLE_QUEEN_SIDE) {

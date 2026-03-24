@@ -17,6 +17,10 @@ namespace tests {
     void perftDivide(Board &board, int depth);
 
     void runPerftSuite(Board &board, const std::vector<PerftResult> &expectedResults, const std::string &suiteName);
+
+    std::map<std::string, int> getStockfishPerft(const std::string &fen, int depth);
+
+    void compareWithStockfish(Board &board, const std::string &fen, int depth);
 };
 
 
