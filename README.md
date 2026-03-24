@@ -35,6 +35,8 @@ Move generation is split into two stages:
 
 **Legal move filtering** (`LegalMoveFilter`) — for each pseudo-legal move, saves board state, makes the move, checks if the king is in check, then restores the board. Only moves that don't leave the king in check survive.
 
+*believe me it is not easy to do.*
+
 This save/restore pattern uses a `BoardState` struct that snapshots all bitboards, occupancies, castle rights, en passant square, and side. Bitboards and occupancies are `std::array` so restoring is just a direct assignment.
 
 ### isSquareAttacked
