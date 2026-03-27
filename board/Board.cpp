@@ -9,6 +9,7 @@
 Board::Board(const std::string &fenString) {
     int rank = 7, file = 0;
     int sideIndex = 0;
+    mailBox.fill({BOTH, PAWN});
     for (const unsigned char piece: fenString) {
         sideIndex++;
         if (piece == ' ')break;
@@ -26,6 +27,7 @@ Board::Board(const std::string &fenString) {
                 bitboards[color][boardPiece] |= (static_cast<U64>(1) << boardIndex);
                 occupancies[color] |= (static_cast<U64>(1) << boardIndex);
                 occupancies[BOTH] |= (static_cast<U64>(1) << boardIndex);
+                mailBox[boardIndex] = {static_cast<Color>(color), static_cast<Piece>(boardPiece)};
                 file++;
             } else {
                 break;
@@ -165,6 +167,10 @@ void Board::removePiece(const int square, Piece piece, Color color) {
     bitboards[color][piece] ^= pieceRemovalBitMask;
     occupancies[color] ^= pieceRemovalBitMask;
     occupancies[BOTH] ^= pieceRemovalBitMask;
+    mailBox[square] = {
+        BOTH,
+        PAWN
+    };
 }
 
 void Board::placePiece(const int square, Piece piece, Color color) {
@@ -172,18 +178,14 @@ void Board::placePiece(const int square, Piece piece, Color color) {
     bitboards[color][piece] |= placeMoveBitMask;
     occupancies[color] |= placeMoveBitMask;
     occupancies[BOTH] |= placeMoveBitMask;
+    mailBox[square] = {
+        color,
+        piece
+    };
 }
 
-ColorPiece Board::getPieceOnTheIndex(const int index) {
-    for (int color = WHITE; color <= BLACK; color++) {
-        for (int piece = PAWN; piece <= KING; piece++) {
-            U64 checkPositionMask = static_cast<U64>(1) << index;
-            if (checkPositionMask & bitboards[color][piece]) {
-                return {static_cast<Color>(color), static_cast<Piece>(piece)};
-            }
-        }
-    }
-    return {BOTH, PAWN}; // BOTH as sentinel — never matches WHITE or BLACK
+ColorPiece Board::getPieceOnTheIndex(const int index) const {
+    return mailBox[index];
 }
 
 void Board::handleCaptureForMove(Move &move) {
@@ -191,6 +193,9 @@ void Board::handleCaptureForMove(Move &move) {
     const U64 enemyOccupancy = occupancies[enemy];
     const int destinationSquare = move.to;
     auto [enemyColor, enemyPiece] = getPieceOnTheIndex(destinationSquare);
+    // if (enemyColor == BOTH) {
+    //     return;
+    // }
     const U64 destinationBitMask = static_cast<U64>(1) << destinationSquare;
     const MoveType moveType = move.moveType;
     if (moveType == SIMPLE || moveType == PROMOTION) {
@@ -222,6 +227,7 @@ BoardState Board::saveState() {
     return {
         bitboards,
         occupancies,
+        mailBox,
         enPassantSquare,
         castleRights,
         side
@@ -234,6 +240,7 @@ void Board::unmakeMove(const BoardState savedState) {
     side = savedState.side;
     enPassantSquare = savedState.enPassantSquare;
     castleRights = savedState.castleRights;
+    mailBox = savedState.mailBox;
 }
 
 void Board::clearALlCastleRightsOf(Color color) {
@@ -286,7 +293,7 @@ void Board::makeMove(Move &move, Color color) {
         setEnPassantSquare(color == WHITE ? move.to - BOARD_WIDTH : move.to + BOARD_WIDTH);
         return;
     }
-
+    // verify the logic
     if (piece == ROOK) {
         if (moveColor == WHITE) {
             if (move.from == WHITE_QUEEN_SIDE_ROOK_FROM) {

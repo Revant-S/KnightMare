@@ -37,15 +37,15 @@ namespace GeneratePseudoLegalMove {
 
     std::vector<Move> getRookPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
-        U64 friendlyOccupancies = board.getOccupancies(side);
-        U64 totalOccupancy = board.getOccupancies(BOTH);
+        const U64 friendlyOccupancies = board.getOccupancies(side);
+        const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 rookPositions = board.getPieceBitBoard(ROOK, side);
         std::vector<Move> rookMoves;
         while (rookPositions) {
-            int rookPosition = Utils::getLSB(rookPositions);
+            const int rookPosition = Utils::getLSB(rookPositions);
             Utils::popLSB(rookPositions);
             for (int direction = NORTH; direction <= WEST; direction++) {
-                U64 blockers = PreMatchAttackComputation::rookAttacks[rookPosition][direction] & totalOccupancy;
+                const U64 blockers = PreMatchAttackComputation::rookAttacks[rookPosition][direction] & totalOccupancy;
                 U64 finalRay;
                 if (blockers) {
                     int nearestBlocker;
@@ -54,15 +54,15 @@ namespace GeneratePseudoLegalMove {
                     } else {
                         nearestBlocker = Utils::getMSB(blockers);
                     }
-                    U64 subtractRay = PreMatchAttackComputation::rookAttacks[nearestBlocker][direction];
-                    U64 fullRay = PreMatchAttackComputation::rookAttacks[rookPosition][direction];
+                    const U64 subtractRay = PreMatchAttackComputation::rookAttacks[nearestBlocker][direction];
+                    const U64 fullRay = PreMatchAttackComputation::rookAttacks[rookPosition][direction];
                     finalRay = fullRay ^ subtractRay;
                 } else {
                     finalRay = PreMatchAttackComputation::rookAttacks[rookPosition][direction];
                 }
                 finalRay &= ~friendlyOccupancies;
                 while (finalRay) {
-                    int destination = Utils::getLSB(finalRay);
+                    const int destination = Utils::getLSB(finalRay);
                     Utils::popLSB(finalRay);
                     rookMoves.push_back({
                         rookPosition,

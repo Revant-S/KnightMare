@@ -52,7 +52,7 @@ public:
 
     void clearCastleRight(Color color , Piece piece);
 
-    ColorPiece getPieceOnTheIndex(int index);
+    ColorPiece getPieceOnTheIndex(int index) const;
 
 
     [[nodiscard]] int getCastleRights(Color color) const;
@@ -73,5 +73,6 @@ private:
 
     int castleRights = 0b1111; // black queen | black king white queen white king
     int enPassantSquare = -1;
+    std::array<ColorPiece , 64> mailBox;
 };
 #endif //BOARD_H

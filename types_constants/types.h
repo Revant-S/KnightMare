@@ -47,6 +47,7 @@ struct ColorPiece {
 struct BoardState {
     std::array<std::array<U64, 6>, 2> bitboards;
     std::array<U64, 3> occupancies;
+    std::array<ColorPiece,64> mailBox;
     int enPassantSquare;
     int castleRights;
     Color side;
