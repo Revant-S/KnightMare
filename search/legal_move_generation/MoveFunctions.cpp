@@ -113,6 +113,8 @@ namespace MoveFunctions {
                 }
             }
         }
+
+
         return allLegalMoves;
     }
 } // MoveFunctions

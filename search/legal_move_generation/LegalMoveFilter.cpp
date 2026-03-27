@@ -10,6 +10,10 @@
 
 namespace LegalMoveFilter {
     bool canKingCastle(Board &board, Move &move, Color color) {
+        bool iskingInCheck = MoveFunctions::isKingInCheck(color, board);
+        if (iskingInCheck) {
+            return false;
+        }
         const MoveType moveType = move.moveType;
         U64 emptySquares = (color == WHITE
                                 ? (moveType == CASTLE_KING_SIDE

@@ -187,14 +187,27 @@ ColorPiece Board::getPieceOnTheIndex(const int index) {
 }
 
 void Board::handleCaptureForMove(Move &move) {
-    Color enemy = (side == WHITE) ? BLACK : WHITE;
-    U64 enemyOccupancy = occupancies[enemy];
-    ColorPiece pieceColor = getPieceOnTheIndex(move.to);
-    U64 destinationBitMask = static_cast<U64>(1) << move.to;
-    MoveType moveType = move.moveType;
+    const Color enemy = (side == WHITE) ? BLACK : WHITE;
+    const U64 enemyOccupancy = occupancies[enemy];
+    const int destinationSquare = move.to;
+    auto [enemyColor, enemyPiece] = getPieceOnTheIndex(destinationSquare);
+    const U64 destinationBitMask = static_cast<U64>(1) << destinationSquare;
+    const MoveType moveType = move.moveType;
     if (moveType == SIMPLE || moveType == PROMOTION) {
         if (destinationBitMask & enemyOccupancy) {
-            removePiece(move.to, pieceColor.piece, pieceColor.color);
+            removePiece(move.to, enemyPiece, enemyColor);
+            // if rook is captured remove the castling right of that rook
+            if (enemyPiece == ROOK) {
+                if (enemyColor == WHITE && destinationSquare == WHITE_ROOK_KING_SIDE_INDEX) {
+                    clearCastleRight(WHITE, KING);
+                } else if (enemyColor == WHITE && destinationSquare == WHITE_ROOK_QUEEN_SIDE_INDEX) {
+                    clearCastleRight(WHITE, QUEEN);
+                } else if (enemyColor == BLACK && destinationSquare == BLACK_ROOK_KING_SIDE_INDEX) {
+                    clearCastleRight(BLACK, KING);
+                } else if (enemyColor == BLACK && destinationSquare == BLACK_ROOK_QUEEN_SIDE_INDEX) {
+                    clearCastleRight(BLACK, QUEEN);
+                }
+            }
         }
         return;
     }
@@ -255,10 +268,10 @@ void Board::clearCastleRight(Color color, Piece piece) {
 }
 
 void Board::makeMove(Move &move, Color color) {
-    clearEnPassantSquare();
     handleCaptureForMove(move);
     removePiece(move.from, move.piece, color);
     placePiece(move.to, move.piece, color);
+    clearEnPassantSquare();
     MoveType moveType = move.moveType;
     Piece piece = move.piece;
     Color moveColor = move.colorOfPieceToMove;
