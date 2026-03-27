@@ -23,6 +23,8 @@ namespace tests {
     void isoLateIncorrectMove(Board board, const std::string &fen, int depth);
 
     void compareWithStockfish(Board &board, const std::string &fen, int depth);
+
+    void testAllPositions();
 };
 
 

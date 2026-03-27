@@ -182,4 +182,17 @@ namespace tests {
         }
         std::cout << "depth=" << depth << " all moves match\n";
     }
+
+    void testAllPositions() {
+        Board p4(POSITION4_FEN);
+        Board p3(POSITION3_FEN);
+        Board p5(POSITION5_FEN);
+        Board startPos;
+        Board kiwiPos(KIWIPETE_PERFT_START_FEN);
+        runPerftSuite(p4, POSITION4_PERFT, "Position 4");
+        runPerftSuite(p3, POSITION3_PERFT, "Position 3");
+        runPerftSuite(p5, POSITION5_PERFT, "Position 5");
+        runPerftSuite(startPos, STARTING_POSITION_PERFT, "START POSITION");
+        runPerftSuite(kiwiPos, KIWIPETE_PERFT, "KIWI POSITION");
+    }
 }
