@@ -104,4 +104,34 @@ namespace Utils {
                     << " expected=" << fenToCompare.size() << "\n";
         }
     }
+
+    Move parseMoveString(const std::string &moveStr, Board &board) {
+        int from = (moveStr[1] - '1') * 8 + (moveStr[0] - 'a');
+        int to = (moveStr[3] - '1') * 8 + (moveStr[2] - 'a');
+        auto [color, piece] = board.getPieceOnTheIndex(from);
+        // handle promotion if moveStr.size() == 5
+        return {from, to, color, piece, SIMPLE};
+    }
+
+    std::string getFenAfterMove(const std::string &fen, const std::string &move) {
+        std::ofstream cmd("/tmp/sf_cmd.txt");
+        cmd << "position fen " << fen << " moves " << move << "\n";
+        cmd << "d\n"; // stockfish 'd' command prints the current FEN
+        cmd << "quit\n";
+        cmd.close();
+
+        FILE *sf = popen("stockfish < /tmp/sf_cmd.txt", "r");
+        char line[512];
+        std::string result;
+        while (fgets(line, sizeof(line), sf)) {
+            std::string s(line);
+            if (s.find("Fen:") != std::string::npos) {
+                result = s.substr(5); // strip "Fen: "
+                result.erase(result.find('\n'));
+                break;
+            }
+        }
+        pclose(sf);
+        return result;
+    }
 }

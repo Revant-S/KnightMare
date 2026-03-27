@@ -110,6 +110,7 @@ namespace tests {
         pclose(sf);
         return results;
     }
+
     void compareWithStockfish(Board &board, const std::string &fen, int depth) {
         auto sfResults = getStockfishPerft(fen, depth);
         std::map<std::string, int> myResults;
@@ -127,7 +128,7 @@ namespace tests {
             int myCount = myResults.contains(move) ? myResults[move] : -1;
             if (myCount != sfCount) {
                 std::cout << "MISMATCH: " << move
-                        << "  yours=" << myCount
+                        << "  mine=" << myCount
                         << "  stockfish=" << sfCount
                         << "  delta=" << (myCount - sfCount) << "\n";
                 found = true;
@@ -141,5 +142,44 @@ namespace tests {
             }
         }
         if (!found) std::cout << "All moves match!\n";
+    }
+
+    void isoLateIncorrectMove(Board board, const std::string &fen, int depth) {
+        if (depth == 0) return;
+
+        auto sfResults = getStockfishPerft(fen, depth);
+
+        // build per-move map same as compareWithStockfish
+        std::map<std::string, int> myResults;
+        for (auto &move: MoveFunctions::getAllLegalMoves(board)) {
+            BoardState saved = board.saveState();
+            board.makeMove(move, board.getSide());
+            board.toggle_side();
+            int nodes = perft(board, depth - 1);
+            board.unmakeMove(saved);
+            myResults[Utils::moveToString(move)] = nodes;
+        }
+
+        for (auto &[move, sfCount]: sfResults) {
+            int myCount = myResults.count(move) ? myResults[move] : 0;
+            if (myCount != sfCount) {
+                std::cout << "depth=" << depth
+                        << " bad move=" << move
+                        << " mine=" << myCount
+                        << " stockfish=" << sfCount
+                        << " delta=" << (myCount - sfCount) << "\n";
+
+                Move m = Utils::parseMoveString(move, board);
+                BoardState saved = board.saveState();
+                board.makeMove(m, board.getSide());
+                board.toggle_side();
+
+                std::string newFen = Utils::getFenAfterMove(fen, move);
+                isoLateIncorrectMove(board, newFen, depth - 1);
+                board.unmakeMove(saved);
+                return;
+            }
+        }
+        std::cout << "depth=" << depth << " all moves match\n";
     }
 }

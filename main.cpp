@@ -6,8 +6,9 @@
 
 int main() {
     PreMatchAttackComputation::init();
-    Board startPos;
-    // tests::runPerftSuite(startPos, STARTING_POSITION_PERFT, "Start Position");
-    Board kiwiPos(KIWIPETE_PERFT_START_FEN);
-    tests::runPerftSuite(kiwiPos, KIWIPETE_PERFT, "KIWI POSITION");
+    Board p4(POSITION4_FEN);
+    tests::runPerftSuite(p4, POSITION4_PERFT, "Position 4");
+    // tests::isoLateIncorrectMove(p4,POSITION4_FEN,3);
+    Board p5(POSITION5_FEN);
+    tests::runPerftSuite(p5, POSITION5_PERFT, "Position 5");
 }

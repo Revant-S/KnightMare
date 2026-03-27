@@ -22,6 +22,10 @@ namespace Utils {
 
     void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves, Color side);
 
+    Move parseMoveString(const std::string &moveStr, Board &board);
+
+    std::string getFenAfterMove(const std::string &fen, const std::string &move);
+
     inline bool checkIndexBounds(int index) {
         return (index <= FINAL_SQUARE_INDEX && index >= FIRST_SQUARE_INDEX);
     }

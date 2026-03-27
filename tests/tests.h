@@ -20,6 +20,8 @@ namespace tests {
 
     std::map<std::string, int> getStockfishPerft(const std::string &fen, int depth);
 
+    void isoLateIncorrectMove(Board board, const std::string &fen, int depth);
+
     void compareWithStockfish(Board &board, const std::string &fen, int depth);
 };
 

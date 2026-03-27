@@ -270,9 +270,13 @@ void Board::clearCastleRight(Color color, Piece piece) {
 void Board::makeMove(Move &move, Color color) {
     handleCaptureForMove(move);
     removePiece(move.from, move.piece, color);
-    placePiece(move.to, move.piece, color);
-    clearEnPassantSquare();
     MoveType moveType = move.moveType;
+    if (moveType != PROMOTION) {
+        placePiece(move.to, move.piece, color);
+    } else {
+        placePiece(move.to, move.promoteTo, color);
+    }
+    clearEnPassantSquare();
     Piece piece = move.piece;
     Color moveColor = move.colorOfPieceToMove;
     if (move.piece == KING) {
@@ -311,6 +315,7 @@ void Board::makeMove(Move &move, Color color) {
         removePiece(rookFrom, ROOK, color);
         placePiece(rookTo, ROOK, color);
     }
+    //
 }
 
 int Board::getCastleRights(Color color) const {
