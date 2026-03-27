@@ -82,18 +82,18 @@ struct PerftResult {
 inline const std::vector<PerftResult> STARTING_POSITION_PERFT = {
     {1, 20},
     {2, 400},
-    {3, 8902},
-    {4, 197281},
-    {5, 4865609},
-    {6, 119060324}
+    {3, 8'902},
+    {4, 197'281},
+    {5, 4'865'609},
+    {6, 119'060'324}
 };
 
 inline const std::vector<PerftResult> KIWIPETE_PERFT = {
     {1, 48},
     {2, 2039},
-    {3, 97862},
-    {4, 4085603},
-    {5, 193690690}
+    {3, 97'862},
+    {4, 4'085'603},
+    {5, 193'690'690}
 };
 
 inline const std::array<std::string, 6> moveTypeString = {
