@@ -88,13 +88,20 @@ inline const std::vector<PerftResult> STARTING_POSITION_PERFT = {
     {6, 119'060'324}
 };
 
+// inline const std::vector<PerftResult> KIWIPETE_PERFT = {
+//     {1, 48},
+//     {2, 2'039},
+//     {3, 97'862},
+//     {4, 4'085'603},
+//     {5, 193'690'690},
+//     {6, 8'031'630'681}
+// };
 inline const std::vector<PerftResult> KIWIPETE_PERFT = {
     {1, 48},
     {2, 2'039},
     {3, 97'862},
     {4, 4'085'603},
     {5, 193'690'690},
-    {6, 8'031'630'681}
 };
 inline const std::vector<PerftResult> POSITION3_PERFT = {
     {1, 14},

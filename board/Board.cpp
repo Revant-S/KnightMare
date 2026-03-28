@@ -56,7 +56,10 @@ Board::Board(const std::string &fenString) {
         }
         castleIndex++;
     }
-    int enpassantFenIndex = castleIndex + 1;
+    int enpassantFenIndex = castleIndex;
+    while (enpassantFenIndex < fenString.length() && fenString[enpassantFenIndex] == ' ')
+        enpassantFenIndex++;
+
     if (fenString[enpassantFenIndex] != '-') {
         int squareFile = fenString[enpassantFenIndex] - 'a';
         std::cout << "ENPASSANT ROW :=" << squareFile << "\n";

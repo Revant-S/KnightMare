@@ -8,19 +8,17 @@
 #include "../../board/Board.h"
 
 namespace GeneratePseudoLegalMove {
-    std::vector<Move> getKnightPseudoLegalMoves(Board &board);
+    MoveList getKnightPseudoLegalMoves(Board &board);
 
-    std::vector<Move> getRookPseudoLegalMoves(Board &board);
+    MoveList getRookPseudoLegalMoves(Board &board);
 
-    std::vector<Move> getBishopPseudoLegalMoves(Board &board);
+    MoveList getBishopPseudoLegalMoves(Board &board);
 
-    std::vector<Move> getQueenPseudoLegalMoves(Board &board);
+    MoveList getQueenPseudoLegalMoves(Board &board);
 
-    std::vector<Move> getKingPseudoLegalMoves(Board &board);
+    MoveList getKingPseudoLegalMoves(Board &board);
 
-    std::vector<Move> getPawnPseudoLegalMoves(Board &board);
-
-    std::vector<std::vector<Move> > getAllPseudoLegalMoves(Board &board);
+    MoveList getPawnPseudoLegalMoves(Board &board);
 } // GenerateLegalMove
 
 #endif //GENERATEPSEUDOLEGALMOVE_H

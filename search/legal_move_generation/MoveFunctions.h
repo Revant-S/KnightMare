@@ -12,7 +12,7 @@ namespace MoveFunctions {
 
     bool isSquareAttackedByEnemy(Color color, int squareIndex, Board &board);
 
-    std::vector<Move> getAllLegalMoves(Board &board);
+    MoveList getAllLegalMoves(Board &board);
 } // MoveFunctions
 
 #endif //MOVEFUNCTIONS_H

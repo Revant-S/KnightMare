@@ -2,7 +2,7 @@
 
 <img src="./logo.png">
 
-A chess engine written in C++ just for fun and to learn. This is a work in progress :— move generation is done, perft testing is underway, and search/evaluation is next.
+A chess engine written in C++ just for fun and to learn. Move generation is complete and verified. Search and evaluation are next.
 
 ---
 
@@ -13,6 +13,8 @@ A chess engine written in C++ just for fun and to learn. This is a work in progr
 The board is represented using **bitboards** — one 64-bit integer per piece type per color. So `bitboards[WHITE][KNIGHT]` is a single `uint64_t` where each set bit represents a white knight on that square. This makes move generation extremely fast since most operations are just bitwise AND/OR/XOR.
 
 Alongside the piece bitboards, three occupancy bitboards are maintained — one for white, one for black, and one for both combined. These are kept in sync on every `placePiece` and `removePiece` call.
+
+A **mailbox** array runs alongside the bitboards — `mailBox[square]` gives the piece and color on that square in O(1). It's kept in sync with the bitboards on every `placePiece` and `removePiece` call and is used to avoid iterating all 12 bitboards when you just need to know what's on a square.
 
 The board also tracks:
 - Side to move
@@ -35,9 +37,9 @@ Move generation is split into two stages:
 
 **Legal move filtering** (`LegalMoveFilter`) — for each pseudo-legal move, saves board state, makes the move, checks if the king is in check, then restores the board. Only moves that don't leave the king in check survive.
 
-*believe me it is not easy to do.*
+This save/restore pattern uses a `BoardState` struct that snapshots all bitboards, occupancies, mailbox, castle rights, en passant square, and side. Everything is `std::array` so restoring is just a direct assignment — no heap allocation.
 
-This save/restore pattern uses a `BoardState` struct that snapshots all bitboards, occupancies, castle rights, en passant square, and side. Bitboards and occupancies are `std::array` so restoring is just a direct assignment.
+Move lists use a fixed-size stack-allocated `MoveList` struct (218 entries — the proven maximum possible legal moves in any chess position) instead of `std::vector`. This eliminates heap allocation from the hot path entirely.
 
 ### isSquareAttacked
 
@@ -49,37 +51,52 @@ The approach is **pretend to be the attacker**:
 - Use knight attack table from the square → if an enemy knight sits there, you're attacked
 - Use your own pawn attack mask from the square → if an enemy pawn sits there, you're attacked
 
+Knight, pawn and king checks are a single bitwise AND against the relevant enemy piece bitboard — no loops at all. Ray checks for rooks and bishops still iterate directions but the inner traversal is replaced by a single AND against combined enemy pieces.
+
 `isKingInCheck` is just a thin wrapper that finds the king's square and calls `isSquareAttacked`.
 
 ### Make / Unmake
 
 `Board::makeMove` handles the mechanical side:
-- Remove piece from source square
-- Place piece on destination square
+- Clear en passant square
 - Handle captures (including en passant)
+- Remove piece from source square, place on destination
+- Update castle rights if king or rook moved
 - Move the rook if castling
+- Set en passant square if double pawn push
 
 `Board::unmakeMove` restores the full `BoardState` snapshot. The reason these are separate functions rather than one combined function is search — minimax needs to make a move, recurse deeper, then unmake it. The make and unmake are separated by an entire recursive call stack.
+`Board` does not know about attack tables. `MoveFunctions` does not mutate board state.
 
+---
 
-## Perft
+## Perft Results (Release build)
 
-Perft (performance test) is used to verify move generation correctness. It walks the legal move tree to a given depth and counts leaf nodes, then compares against known values.
+All standard perft positions pass. Times measured in Release mode (`-O3`). I also expect this to speed up as Magic BitBoards are not implemented yet.
 
-```
-runPerftSuite(board, STARTING_POSITION_PERFT, "Starting Position");
-```
+| Position | Depth | Nodes | Time |
+|---|---|---|---|
+| Starting position | 6 | 119,060,324 | 15s |
+| Kiwipete | 5 | 193,690,690 | 18s |
+| Position 3 | 5 | 674,624 | 125ms |
+| Position 4 | 4 | 422,333 | 57ms |
+| Position 5 | 4 | 2,103,487 | 235ms |
 
-If a depth fails,run `perftDivide` which prints per-move node counts. You compare those against the published values on the Chess Programming Wiki to isolate exactly which move is wrong.
+Kiwipete is specifically designed to stress-test castling, en passant, and promotion edge cases. Passing it at depth 5 means 193 million positions all generated correctly.
 
-Known perft values are in `types_constants/constants.h` for the starting position and Kiwipete (a position specifically designed to stress-test castling and en passant).
+A Stockfish comparison tool is included in `tests/` — it pipes commands to a local Stockfish installation and compares per-move node counts to isolate bugs to a specific position at depth 1.
 
 ---
 
 ## What's next
 
-- [ ] Perft passing for starting position and Kiwipete
-- [ ] Castle rights update on king/rook moves
-- [ ] Evaluation function
+- [x] Move generation complete
+- [x] All perft suites passing
+- [x] Castle rights correctly updated on king/rook moves
+- [x] Mailbox for O(1) piece lookup
+- [x] Stack-allocated MoveList (no heap allocation in move gen)
 - [ ] Minimax with alpha-beta pruning
+- [ ] Simple evaluation (piece values)
+- [ ] Make it play a legal game
 - [ ] Move ordering
+- [ ] Transposition table

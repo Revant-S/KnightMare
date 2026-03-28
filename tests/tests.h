@@ -10,7 +10,7 @@
 
 
 namespace tests {
-    void visualizeMoves(const std::vector<Move> &moves);
+    void visualizeMoves(const MoveList &moves);
 
     int perft(Board &board, int depth);
 

@@ -7,22 +7,19 @@
 #include "../../utils/utils.h"
 
 namespace GeneratePseudoLegalMove {
-    std::vector<Move> getKnightPseudoLegalMoves(Board &board) {
+    MoveList getKnightPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
         const U64 friendlyOccupancy = board.getOccupancies(side);
         U64 knightPositions = board.getPieceBitBoard(KNIGHT, side);
-        // std::cout << "generating knights for side=" << side
-        //         << " positions=" << knightPositions << "\n";
-        std::vector<Move> knightMoves;
+        MoveList knightMoves;
         while (knightPositions) {
             const int knightPosition = Utils::getLSB(knightPositions);
             Utils::popLSB(knightPositions);
             U64 attacks = PreMatchAttackComputation::knightAttacks[knightPosition] & ~friendlyOccupancy;
-            // std::cout << PreMatchAttackComputation::knightAttacks[knightPosition] << "\n";
             while (attacks) {
                 const int destination = Utils::getLSB(attacks);
                 Utils::popLSB(attacks);
-                knightMoves.push_back({
+                knightMoves.addMove({
                     knightPosition,
                     destination,
                     side,
@@ -35,12 +32,12 @@ namespace GeneratePseudoLegalMove {
         return knightMoves;
     }
 
-    std::vector<Move> getRookPseudoLegalMoves(Board &board) {
+    MoveList getRookPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
         const U64 friendlyOccupancies = board.getOccupancies(side);
         const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 rookPositions = board.getPieceBitBoard(ROOK, side);
-        std::vector<Move> rookMoves;
+        MoveList rookMoves;
         while (rookPositions) {
             const int rookPosition = Utils::getLSB(rookPositions);
             Utils::popLSB(rookPositions);
@@ -64,7 +61,7 @@ namespace GeneratePseudoLegalMove {
                 while (finalRay) {
                     const int destination = Utils::getLSB(finalRay);
                     Utils::popLSB(finalRay);
-                    rookMoves.push_back({
+                    rookMoves.addMove({
                         rookPosition,
                         destination,
                         side,
@@ -77,13 +74,13 @@ namespace GeneratePseudoLegalMove {
         return rookMoves;
     }
 
-    std::vector<Move> getBishopPseudoLegalMoves(Board &board) {
+    MoveList getBishopPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
         const U64 friendlyOccupancies = board.getOccupancies(side);
         const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 bishopPositions = board.getPieceBitBoard(BISHOP, side);
 
-        std::vector<Move> bishopMoves;
+        MoveList bishopMoves;
         while (bishopPositions) {
             const int bishopPosition = Utils::getLSB(bishopPositions);
             Utils::popLSB(bishopPositions);
@@ -109,7 +106,7 @@ namespace GeneratePseudoLegalMove {
                 while (finalRay) {
                     const int destination = Utils::getLSB(finalRay);
                     Utils::popLSB(finalRay);
-                    bishopMoves.push_back({
+                    bishopMoves.addMove({
                         bishopPosition,
                         destination,
                         side,
@@ -121,12 +118,12 @@ namespace GeneratePseudoLegalMove {
         return bishopMoves;
     }
 
-    std::vector<Move> getQueenPseudoLegalMoves(Board &board) {
+    MoveList getQueenPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
         const U64 friendlyOccupancy = board.getOccupancies(side);
         const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 queenPositions = board.getPieceBitBoard(QUEEN, side);
-        std::vector<Move> queenMoves;
+        MoveList queenMoves;
         while (queenPositions) {
             const int queenPosition = Utils::getLSB(queenPositions);
             Utils::popLSB(queenPositions);
@@ -150,7 +147,7 @@ namespace GeneratePseudoLegalMove {
                 while (finalRay) {
                     const int destination = Utils::getLSB(finalRay);
                     Utils::popLSB(finalRay);
-                    queenMoves.push_back({
+                    queenMoves.addMove({
                         queenPosition,
                         destination,
                         side,
@@ -162,31 +159,28 @@ namespace GeneratePseudoLegalMove {
         return queenMoves;
     }
 
-    std::vector<Move> getKingPseudoLegalMoves(Board &board) {
+    MoveList getKingPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
         const U64 friendlyOccupancy = board.getOccupancies(side);
         const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 kingPositions = board.getPieceBitBoard(KING, side);
         const int castleRights = board.getCastleRights(side);
 
-        std::vector<Move> kingMoves;
+        MoveList kingMoves;
 
         while (kingPositions) {
             const int kingPosition = Utils::getLSB(kingPositions);
             Utils::popLSB(kingPositions);
-
-            // Normal king moves
             U64 pseudoMoves = PreMatchAttackComputation::kingAttacks[kingPosition] & ~friendlyOccupancy;
             while (pseudoMoves) {
                 const int destination = Utils::getLSB(pseudoMoves);
                 Utils::popLSB(pseudoMoves);
-                kingMoves.push_back({kingPosition, destination, side, KING});
+                kingMoves.addMove({kingPosition, destination, side, KING});
             }
-
             if (side == WHITE) {
                 if ((castleRights & WHITE_KING_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & WHITE_KING_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({
+                    kingMoves.addMove({
                         WHITE_KING_SQUARE,
                         WHITE_KING_KING_SIDE_CASTLE_DESTINATION,
                         side,
@@ -196,7 +190,7 @@ namespace GeneratePseudoLegalMove {
                 }
                 if ((castleRights & WHITE_QUEEN_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & WHITE_QUEEN_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({
+                    kingMoves.addMove({
                         WHITE_KING_SQUARE,
                         WHITE_KING_QUEEN_SIDE_CASTLE_DESTINATION,
                         side,
@@ -207,7 +201,7 @@ namespace GeneratePseudoLegalMove {
             } else {
                 if ((castleRights & BLACK_KING_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & BLACK_KING_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({
+                    kingMoves.addMove({
                         BLACK_KING_SQUARE,
                         BLACK_KING_KING_SIDE_CASTLE_DESTINATION,
                         side,
@@ -217,7 +211,7 @@ namespace GeneratePseudoLegalMove {
                 }
                 if ((castleRights & BLACK_QUEEN_SIDE_CASTLE_MASK) &&
                     !(totalOccupancy & BLACK_QUEEN_SIDE_CASTLE_EMPTY)) {
-                    kingMoves.push_back({
+                    kingMoves.addMove({
                         BLACK_KING_SQUARE,
                         BLACK_KING_QUEEN_SIDE_CASTLE_DESTINATION,
                         side,
@@ -230,9 +224,7 @@ namespace GeneratePseudoLegalMove {
 
         return kingMoves;
     }
-
-
-    std::vector<Move> getPawnPseudoLegalMoves(Board &board) {
+    MoveList getPawnPseudoLegalMoves(Board &board) {
         const Color side = board.getSide();
         const Color enemySide = (side == WHITE) ? BLACK : WHITE;
 
@@ -244,9 +236,7 @@ namespace GeneratePseudoLegalMove {
         const U64 totalOccupancies = board.getOccupancies(BOTH);
         U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
         const int pawnForwardDisplacement = (side == WHITE) ? BOARD_WIDTH : -BOARD_WIDTH;
-
-        std::vector<Move> moves;
-
+        MoveList moves;
         while (pawnPositions) {
             const int pawnPosition = Utils::getLSB(pawnPositions);
             Utils::popLSB(pawnPositions);
@@ -255,7 +245,7 @@ namespace GeneratePseudoLegalMove {
                 const int destination = Utils::getLSB(pawnAttacks);
                 Utils::popLSB(pawnAttacks);
                 if (destination == enpassantSquare) {
-                    moves.push_back({
+                    moves.addMove({
                         pawnPosition,
                         destination,
                         side,
@@ -265,7 +255,7 @@ namespace GeneratePseudoLegalMove {
                 } else if (Utils::checkPawnPromotion(side, destination)) {
                     Utils::populatePromotionMoves(pawnPosition, destination, moves, side);
                 } else {
-                    moves.push_back({pawnPosition, destination, side, PAWN});
+                    moves.addMove({pawnPosition, destination, side, PAWN});
                 }
             }
             if (const int oneStepForward = pawnPosition + pawnForwardDisplacement; Utils::checkIndexBounds(
@@ -274,14 +264,14 @@ namespace GeneratePseudoLegalMove {
                     if (Utils::checkPawnPromotion(side, oneStepForward)) {
                         Utils::populatePromotionMoves(pawnPosition, oneStepForward, moves, side);
                     } else {
-                        moves.push_back({pawnPosition, oneStepForward, side, PAWN});
+                        moves.addMove({pawnPosition, oneStepForward, side, PAWN});
                     }
                     if (Utils::checkDoublePawnMoves(pawnPosition, side)) {
                         if (const int twoStepForwardSquare = pawnPosition + 2 * pawnForwardDisplacement;
                             Utils::checkIndexBounds(twoStepForwardSquare)) {
                             if (const U64 twoStepBit = (static_cast<U64>(1) << twoStepForwardSquare); !(
                                 twoStepBit & totalOccupancies)) {
-                                moves.push_back({
+                                moves.addMove({
                                     pawnPosition,
                                     twoStepForwardSquare,
                                     side,
@@ -296,16 +286,5 @@ namespace GeneratePseudoLegalMove {
         }
 
         return moves;
-    }
-
-    std::vector<std::vector<Move> > getAllPseudoLegalMoves(Board &board) {
-        return {
-            getPawnPseudoLegalMoves(board),
-            getKnightPseudoLegalMoves(board),
-            getBishopPseudoLegalMoves(board),
-            getRookPseudoLegalMoves(board),
-            getQueenPseudoLegalMoves(board),
-            getKingPseudoLegalMoves(board),
-        };
     }
 } // GenerateLegalMove

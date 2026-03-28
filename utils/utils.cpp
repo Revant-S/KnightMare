@@ -35,7 +35,7 @@ namespace Utils {
         return result;
     }
 
-    void printMoves(std::vector<Move> &moves) {
+    void printMoves(MoveList &moves) {
         for (auto &move: moves) {
             std::cout << moveToString(move);
             if (move.moveType != SIMPLE) {
@@ -46,7 +46,7 @@ namespace Utils {
     }
 
     void printAllPseudoLegalMoves(Board &board) {
-        auto printSection = [&](const std::string &label, std::vector<Move> moves) {
+        auto printSection = [&](const std::string &label, MoveList moves) {
             std::cout << "\n--- " << label << " ---\n";
             printMoves(moves);
         };
@@ -73,9 +73,9 @@ namespace Utils {
         if (black & BLACK_QUEEN_SIDE_CASTLE_MASK) std::cout << "Black can castle queenside\n";
     }
 
-    void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves, Color side) {
+    void populatePromotionMoves(int pawnPosition, int destination, MoveList &moves, Color side) {
         for (int promoteTo = KNIGHT; promoteTo <= QUEEN; promoteTo++) {
-            moves.push_back({
+            moves.addMove({
                 pawnPosition,
                 destination,
                 side,

@@ -7,9 +7,10 @@
 #include "../search/legal_move_generation/MoveFunctions.h"
 #include "../types_constants/types.h"
 #include "../utils/utils.h"
+#include <chrono>
 
 namespace tests {
-    void visualizeMoves(const std::vector<Move> &moves) {
+    void visualizeMoves(const MoveList &moves) {
         U64 attackMap = 0ULL;
         int pieceSquare = -1;
 
@@ -28,8 +29,8 @@ namespace tests {
 
     int perft(Board &board, int depth) {
         if (depth == 0) return 1;
-        std::vector<Move> legalMoves = MoveFunctions::getAllLegalMoves(board);
-        if (legalMoves.empty()) return 0;
+        MoveList legalMoves = MoveFunctions::getAllLegalMoves(board);
+        if (legalMoves.isEmpty()) return 0;
         if (depth == 1) return legalMoves.size(); // bulk count, skip makeMove
 
         int nodes = 0;
@@ -58,6 +59,7 @@ namespace tests {
     }
 
     void runPerftSuite(Board &board, const std::vector<PerftResult> &expectedResults, const std::string &suiteName) {
+        const auto start = std::chrono::steady_clock::now();
         std::cout << "\n=== Perft Suite: " << suiteName << " ===\n";
 
         for (const auto &[depth, expected]: expectedResults) {
@@ -79,9 +81,10 @@ namespace tests {
         }
 
         std::cout << "All depths passed.\n";
+        const auto end = std::chrono::steady_clock::now();
+        const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << "========== TOTAL TIME TO GENERATE======= :-- " << duration.count() << " milliseconds" << "\n";
     }
-
-
     std::map<std::string, int> getStockfishPerft(const std::string &fen, int depth) {
         std::ofstream cmdFile("/tmp/sf_commands.txt");
         cmdFile << "position fen " << fen << "\n";

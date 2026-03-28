@@ -14,13 +14,13 @@ namespace Utils {
 
     std::string moveToString(const Move &move);
 
-    void printMoves(std::vector<Move> &moves);
+    void printMoves(MoveList &moves);
 
     void printAllPseudoLegalMoves(Board &board);
 
     void printCastleRights(Board &board);
 
-    void populatePromotionMoves(int pawnPosition, int destination, std::vector<Move> &moves, Color side);
+    void populatePromotionMoves(int pawnPosition, int destination, MoveList &moves, Color side);
 
     Move parseMoveString(const std::string &moveStr, Board &board);
 

@@ -39,6 +39,20 @@ struct Move {
     bool isCapture = false;
 };
 
+struct MoveList {
+    Move moves[256];
+    int count = 0;
+    void addMove(const Move &move) { moves[count++] = move; }
+    Move *begin() { return moves; }
+    Move *end() { return moves + count; }
+    Move &operator[](const int i) { return moves[i]; }
+
+    [[nodiscard]] const Move *begin() const { return moves; }
+    [[nodiscard]] const Move *end() const { return moves + count; }
+    [[nodiscard]] int size() const { return count; }
+    [[nodiscard]] bool isEmpty() const { return count == 0; }
+};
+
 struct ColorPiece {
     Color color;
     Piece piece;
@@ -47,7 +61,7 @@ struct ColorPiece {
 struct BoardState {
     std::array<std::array<U64, 6>, 2> bitboards;
     std::array<U64, 3> occupancies;
-    std::array<ColorPiece,64> mailBox;
+    std::array<ColorPiece, 64> mailBox;
     int enPassantSquare;
     int castleRights;
     Color side;
