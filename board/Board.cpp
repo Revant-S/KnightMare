@@ -138,7 +138,7 @@ void Board::getAndPrintPawnMovePermissions() {
     }
 }
 
-uint16_t Board::getDoubleMovePawnPermissions(Color color) const {
+U64 Board::getDoubleMovePawnPermissions(Color color) const {
     return pawnMasks[color] & doublePawnMoveRight;
 }
 
@@ -196,15 +196,11 @@ void Board::handleCaptureForMove(Move &move) {
     const U64 enemyOccupancy = occupancies[enemy];
     const int destinationSquare = move.to;
     auto [enemyColor, enemyPiece] = getPieceOnTheIndex(destinationSquare);
-    // if (enemyColor == BOTH) {
-    //     return;
-    // }
     const U64 destinationBitMask = static_cast<U64>(1) << destinationSquare;
     const MoveType moveType = move.moveType;
     if (moveType == SIMPLE || moveType == PROMOTION) {
         if (destinationBitMask & enemyOccupancy) {
             removePiece(move.to, enemyPiece, enemyColor);
-            // if rook is captured remove the castling right of that rook
             if (enemyPiece == ROOK) {
                 if (enemyColor == WHITE && destinationSquare == WHITE_ROOK_KING_SIDE_INDEX) {
                     clearCastleRight(WHITE, KING);
@@ -248,36 +244,31 @@ void Board::unmakeMove(const BoardState savedState) {
 
 void Board::clearALlCastleRightsOf(Color color) {
     if (color == WHITE) {
-        // clear white king + queen side (bits 0 and 1)
         castleRights &= ~0b0011;
     } else if (color == BLACK) {
-        // clear black king + queen side (bits 2 and 3)
         castleRights &= ~0b1100;
     }
 }
 
 void Board::clearCastleRight(Color color, Piece piece) {
-    assert(piece == KING || piece == QUEEN); // KING = king-side, QUEEN = queen-side
-
+    assert(piece == KING || piece == QUEEN);
     if (color == WHITE) {
         if (piece == KING) {
             castleRights &= ~WHITE_KING_SIDE_CASTLE_MASK;
         } else {
-            // QUEEN side
             castleRights &= ~WHITE_QUEEN_SIDE_CASTLE_MASK;
         }
     } else {
-        // BLACK
         if (piece == KING) {
             castleRights &= ~BLACK_KING_SIDE_CASTLE_MASK;
         } else {
-            // QUEEN side
             castleRights &= ~BLACK_QUEEN_SIDE_CASTLE_MASK;
         }
     }
 }
 
-void Board::makeMove(Move &move, Color color) {
+void Board::makeMove(Move &move) {
+    Color color = move.colorOfPieceToMove;
     handleCaptureForMove(move);
     removePiece(move.from, move.piece, color);
     MoveType moveType = move.moveType;
@@ -325,7 +316,6 @@ void Board::makeMove(Move &move, Color color) {
         removePiece(rookFrom, ROOK, color);
         placePiece(rookTo, ROOK, color);
     }
-    //
 }
 
 int Board::getCastleRights(Color color) const {

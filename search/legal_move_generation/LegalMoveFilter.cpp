@@ -53,7 +53,7 @@ namespace LegalMoveFilter {
         //     // std::cout << "before makeMove: " << Utils::moveToString(move) << "\n";
         // }
 
-        board.makeMove(move, side);
+        board.makeMove(move);
 
         if (move.piece == KNIGHT && side == BLACK) {
             // std::cout << "after makeMove, checking king\n";

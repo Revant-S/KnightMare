@@ -105,12 +105,32 @@ namespace Utils {
         }
     }
 
+    MoveType getMoveType(const int from, const int to, Color color, Piece piece, Board &board) {
+        int enPassantSquare = board.getEnpassantSquare();
+        if (piece == KING && (abs(to - from) > 1)) {
+            if (to > from) {
+                return CASTLE_KING_SIDE;
+            }
+            return CASTLE_QUEEN_SIDE;
+        }
+        if (to == enPassantSquare) {
+            return EN_PASSANT;
+        }
+        if (abs(from - to) == 16) {
+            return DOUBLE_PAWN_MOVE;
+        }
+        if (checkPawnPromotion(color, to)) {
+            return PROMOTION;
+        }
+        return SIMPLE;
+    }
+
     Move parseMoveString(const std::string &moveStr, Board &board) {
-        int from = (moveStr[1] - '1') * 8 + (moveStr[0] - 'a');
-        int to = (moveStr[3] - '1') * 8 + (moveStr[2] - 'a');
+        const int from = (moveStr[1] - '1') * 8 + (moveStr[0] - 'a');
+        const int to = (moveStr[3] - '1') * 8 + (moveStr[2] - 'a');
         auto [color, piece] = board.getPieceOnTheIndex(from);
-        // handle promotion if moveStr.size() == 5
-        return {from, to, color, piece, SIMPLE};
+        MoveType moveType = getMoveType(from, to, color, piece, board);
+        return {from, to, color, piece, moveType};
     }
 
     std::string getFenAfterMove(const std::string &fen, const std::string &move) {

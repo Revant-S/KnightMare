@@ -36,7 +36,6 @@ struct Move {
     Piece piece;
     MoveType moveType = SIMPLE;
     Piece promoteTo = PAWN;
-    bool isCapture = false;
 };
 
 struct MoveList {

@@ -20,4 +20,8 @@ add_executable(chess main.cpp
         search/legal_move_generation/LegalMoveFilter.h
         search/legal_move_generation/MoveFunctions.cpp
         search/legal_move_generation/MoveFunctions.h
+        search/alpha_beta_search/Search.cpp
+        search/alpha_beta_search/Search.h
+        search/evaluation/Evaluation.cpp
+        search/evaluation/Evaluation.h
 )

@@ -45,6 +45,26 @@ constexpr U64 WHITE_QUEEN_SIDE_CASTLE_SAFE = (1ULL << 2) | (1ULL << 3);
 constexpr U64 BLACK_KING_SIDE_CASTLE_SAFE = (1ULL << 61) | (1ULL << 62);
 constexpr U64 BLACK_QUEEN_SIDE_CASTLE_SAFE = (1ULL << 58) | (1ULL << 59); // c8, d8 only — not b8
 
+// Material Weights for evaluation in the order of enum
+// The reasoning:
+
+// Pawn   = 100   baseline unit, everything relative to this
+// Knight = 320   slightly less than bishop in open positions
+// Bishop = 330   slightly better than knight, bishop pair is strong
+// Rook   = 500   worth roughly 5 pawns, a rook and pawn beats two minor pieces
+// Queen  = 900   roughly rook + bishop
+// King   = 20000  never actually captured, just needs to be so large
+//                  that no material gain ever justifies losing it
+
+inline std::array<int, 6> materialWeight = {
+    100,
+    320,
+    330,
+    500,
+    900,
+    20000
+};
+
 /**
  * If Using CLION
  * IGNORE THE X AND Y SHOWN IN THE CLION THAT IS MISLEADING
@@ -133,5 +153,6 @@ inline std::string POSITION3_FEN = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
 inline std::string POSITION4_FEN = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq -";
 inline std::string POSITION5_FEN = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ -";
 
+inline constexpr int DEPTH_OF_SEARCH = 3;
 
 #endif //CONSTANTS_H

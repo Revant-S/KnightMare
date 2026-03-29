@@ -24,7 +24,7 @@ public:
 
     void getAndPrintPawnMovePermissions();
 
-    uint16_t getDoubleMovePawnPermissions(Color color) const;
+    U64 getDoubleMovePawnPermissions(Color color) const;
 
     void setEnPassantSquare(int squareIndex);
 
@@ -40,7 +40,7 @@ public:
 
     void placePiece(int square, Piece piece, Color color);
 
-    void makeMove(Move &move, Color color);
+    void makeMove(Move &move);
 
     void handleCaptureForMove(Move &move);
 

@@ -36,7 +36,7 @@ namespace tests {
         int nodes = 0;
         for (auto &move: legalMoves) {
             BoardState saved = board.saveState();
-            board.makeMove(move, board.getSide());
+            board.makeMove(move);
             board.toggle_side();
             nodes += perft(board, depth - 1);
             board.unmakeMove(saved);
@@ -50,7 +50,7 @@ namespace tests {
         for (auto &move: allLegalMoves) {
             // std::cout << Utils::moveToString(move) << "\n";
             BoardState saved = board.saveState();
-            board.makeMove(move, board.getSide());
+            board.makeMove(move);
             board.toggle_side();
             int nodes = perft(board, depth - 1);
             board.unmakeMove(saved);
@@ -119,7 +119,7 @@ namespace tests {
         std::map<std::string, int> myResults;
         for (auto &move: MoveFunctions::getAllLegalMoves(board)) {
             BoardState saved = board.saveState();
-            board.makeMove(move, board.getSide());
+            board.makeMove(move);
             board.toggle_side();
             int nodes = tests::perft(board, depth - 1);
             board.unmakeMove(saved);
@@ -156,7 +156,7 @@ namespace tests {
         std::map<std::string, int> myResults;
         for (auto &move: MoveFunctions::getAllLegalMoves(board)) {
             BoardState saved = board.saveState();
-            board.makeMove(move, board.getSide());
+            board.makeMove(move);
             board.toggle_side();
             int nodes = perft(board, depth - 1);
             board.unmakeMove(saved);
@@ -174,7 +174,7 @@ namespace tests {
 
                 Move m = Utils::parseMoveString(move, board);
                 BoardState saved = board.saveState();
-                board.makeMove(m, board.getSide());
+                board.makeMove(m);
                 board.toggle_side();
 
                 std::string newFen = Utils::getFenAfterMove(fen, move);
