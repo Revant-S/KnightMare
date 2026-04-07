@@ -49,8 +49,8 @@ namespace MoveFunctions {
             U64 finalRay = fullRay;
             if (blockerRay) {
                 const int nearestBlocker = (direction == NORTH_EAST || direction == NORTH_WEST)
-                                         ? Utils::getLSB(blockerRay)
-                                         : Utils::getMSB(blockerRay);
+                                               ? Utils::getLSB(blockerRay)
+                                               : Utils::getMSB(blockerRay);
                 finalRay = fullRay ^ PreMatchAttackComputation::bishopAttacks[nearestBlocker][direction - 4];
             }
             if (finalRay & (enemyBishops | enemyQueens)) return true;
@@ -61,20 +61,19 @@ namespace MoveFunctions {
 
     MoveList getAllLegalMoves(Board &board) {
         MoveList legalMoves;
-
         auto check = [&](MoveList &pseudoMoves) {
-            for (Move &move : pseudoMoves) {
+            for (Move &move: pseudoMoves) {
                 if (LegalMoveFilter::isMoveLegal(board, move)) {
                     legalMoves.addMove(move);
                 }
             }
         };
-        auto pawns   = GeneratePseudoLegalMove::getPawnPseudoLegalMoves(board);
+        auto pawns = GeneratePseudoLegalMove::getPawnPseudoLegalMoves(board);
         auto knights = GeneratePseudoLegalMove::getKnightPseudoLegalMoves(board);
         auto bishops = GeneratePseudoLegalMove::getBishopPseudoLegalMoves(board);
-        auto rooks   = GeneratePseudoLegalMove::getRookPseudoLegalMoves(board);
-        auto queens  = GeneratePseudoLegalMove::getQueenPseudoLegalMoves(board);
-        auto kings   = GeneratePseudoLegalMove::getKingPseudoLegalMoves(board);
+        auto rooks = GeneratePseudoLegalMove::getRookPseudoLegalMoves(board);
+        auto queens = GeneratePseudoLegalMove::getQueenPseudoLegalMoves(board);
+        auto kings = GeneratePseudoLegalMove::getKingPseudoLegalMoves(board);
 
         check(pawns);
         check(knights);
@@ -82,7 +81,6 @@ namespace MoveFunctions {
         check(rooks);
         check(queens);
         check(kings);
-
         return legalMoves;
     }
 } // MoveFunctions

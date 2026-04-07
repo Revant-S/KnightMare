@@ -10,26 +10,38 @@
 #include <algorithm>
 
 namespace Search {
+    // Safe infinity values to prevent Negamax overflow
+    const int INF = 1000000;
+    const int MATE_SCORE = 100000;
+
     int minMax(const int depth, Board &board) {
+        // Base case: static evaluation
         if (depth == 0) {
             return Evaluation::evaluate(board);
         }
 
-        int maxScore = std::numeric_limits<int>::min();
+        int maxScore = -INF;
         MoveList legalMoves = MoveFunctions::getAllLegalMoves(board);
 
+        // Checkmate and Stalemate detection
         if (legalMoves.isEmpty()) {
             if (MoveFunctions::isKingInCheck(board.getSide(), board)) {
-                return -100000 + depth; // checkmate (depth helps prefer faster mates)
+                // Subtract depth so higher depth (faster mates) are penalized MORE for the loser,
+                // which translates to a HIGHER positive score when negated by the winner.
+                return -MATE_SCORE - depth;
             } else {
                 return 0; // stalemate
             }
         }
+
         for (Move &move: legalMoves) {
             BoardState savedState = board.saveState();
+
             board.makeMove(move);
-            board.toggle_side();
+            // board.toggle_side(); // REMOVE THIS IF makeMove() ALREADY TOGGLES THE TURN
+
             int score = -minMax(depth - 1, board);
+
             board.unmakeMove(savedState);
             maxScore = std::max(maxScore, score);
         }
@@ -42,14 +54,23 @@ namespace Search {
         if (legalMoves.isEmpty()) {
             return {};
         }
-        int maxScore = std::numeric_limits<int>::min();
+
+        int maxScore = -INF;
         Move bestMove = legalMoves[0];
+
+        // Ensure DEPTH_OF_SEARCH is at least 2, otherwise it can't see mates!
+        int currentDepth = std::max(2, DEPTH_OF_SEARCH);
+
         for (auto &move: legalMoves) {
             BoardState savedState = board.saveState();
+
             board.makeMove(move);
-            board.toggle_side();
-            int score = -minMax(DEPTH_OF_SEARCH - 1, board);
+            // board.toggle_side(); // REMOVE THIS IF makeMove() ALREADY TOGGLES THE TURN
+
+            int score = -minMax(currentDepth - 1, board);
+
             board.unmakeMove(savedState);
+
             if (score > maxScore) {
                 maxScore = score;
                 bestMove = move;

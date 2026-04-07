@@ -42,6 +42,8 @@ public:
 
     void makeMove(Move &move);
 
+    std::string toFEN() const ;
+
     void handleCaptureForMove(Move &move);
 
     BoardState saveState();

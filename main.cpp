@@ -1,3 +1,4 @@
+#include <cstdio>
 #include <bits/stdc++.h>
 #include "board/Board.h"
 #include "PreMatchComputations/PreMatchAttackComputation.h"
@@ -5,51 +6,81 @@
 #include "tests/tests.h"
 #include "utils/utils.h"
 
-void startGame() {
-    // main game loop
-    std::string startFenString;
-    std::cout << "Enter the FEN string you want to load. If None press enter\n";
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // clear buffer
-    std::getline(std::cin, startFenString);
-    std::cout << startFenString;
-    if (startFenString.empty()) {
-        std::cout << "Loading default position...\n";
-        startFenString = NORMAL_START_POSITION_FEN;
-    } else {
-        std::cout << "Loaded FEN: " << startFenString << "\n";
-    }
-    Board board(startFenString);
-    board.print_board();
-    int botColor;
-    bool isValidColor = false;
-    while (!isValidColor) {
-        std::cout << "WHICH COLOR IS BOT PLAYING: 0-->WHITE 1--> BLACK";
-        std::cin >> botColor;
-        if (botColor == 1 || botColor == 0) {
-            std::cout << botColor;
-            isValidColor = true;
-        }
-    }
+void uciLoop() {
+    Board board;
+    std::string line;
 
-    while (true) {
-        if (board.getSide() == static_cast<Color>(botColor)) {
-            Move bestMove = Search::getBestMove(board);
-            board.makeMove(bestMove);
-            std::cout << "BOT MOVE: ";
-            std::cout << Utils::moveToString(bestMove) << "\n";
-        } else {
-            std::string OpponentMove;
-            std::cout << "Enter the your Move\n";
-            std::cin >> OpponentMove;
-            Move move = Utils::parseMoveString(OpponentMove, board);
-            board.makeMove(move);
+    while (std::getline(std::cin, line)) {
+        std::cerr << "received: " << line << "\n";
+        std::cerr.flush();
+
+        if (line == "uci") {
+            std::cout << "id name KnightMare\n";
+            std::cout << "id author Revant Sinha\n";
+            std::cout << "uciok\n";
+            std::cout.flush();
+
+        } else if (line == "isready") {
+            std::cout << "readyok\n";
+            std::cout.flush();
+
+        } else if (line == "ucinewgame") {
+            board = Board(NORMAL_START_POSITION_FEN);
+            std::cerr << "NEW GAME";
+        } else if (line.starts_with("position")) {
+            if (line.find("startpos") != std::string::npos) {
+                board = Board(NORMAL_START_POSITION_FEN);
+            } else if (line.find("fen") != std::string::npos) {
+                std::string fen = line.substr(line.find("fen") + 4);
+                if (fen.find(" moves") != std::string::npos)
+                    fen = fen.substr(0, fen.find(" moves"));
+                board = Board(fen);
+                std::cerr<<"SIDE TO PLAY : \n"<<board.getSide();
+            }
+            if (line.find("moves") != std::string::npos) {
+                std::string movesStr = line.substr(line.find("moves") + 6);
+                std::istringstream ss(movesStr);
+                std::string moveStr;
+                while (ss >> moveStr) {
+                    Move move = Utils::parseMoveString(moveStr, board);
+                    std::cerr << "applying: " << moveStr
+                              << " from=" << move.from
+                              << " to=" << move.to
+                              << " piece=" << move.piece
+                              << " color=" << move.colorOfPieceToMove << "\n";
+                    std::cerr.flush();
+                    board.makeMove(move);
+                    board.toggle_side();
+                }
+            }
+            std::cerr << "board after position:\n";
+            board.print_board();
+
+        } else if (line.starts_with("go")) {
+            // std::cerr << "searching position:\n";
+            // board.print_board();
+            Move best = Search::getBestMove(board);
+            std::cerr << "bestmove: " << Utils::moveToString(best) << "\n";
+            std::cerr.flush();
+            std::cout << "bestmove " << Utils::moveToString(best) << "\n";
+            std::cout.flush();
+
+        } else if (line == "quit") {
+            break;
         }
-        board.toggle_side();
     }
 }
 
+
 int main() {
     PreMatchAttackComputation::init();
+    // std::remove("/tmp/knightmare.log");
+    // freopen("/tmp/knightmare.log", "w", stderr);
+
     // tests::testAllPositions();
-    startGame();
+    // Board board("8/2p2p1p/2k1p1p1/3p4/pP6/P7/1KP2PPP/8 b - - 1 29");
+    // board.print_board();
+    // Move move = Search::getBestMove(board);
+    // std::cout << Utils::moveToString(move);
+    uciLoop();
 }

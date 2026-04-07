@@ -62,10 +62,8 @@ Board::Board(const std::string &fenString) {
 
     if (fenString[enpassantFenIndex] != '-') {
         int squareFile = fenString[enpassantFenIndex] - 'a';
-        std::cout << "ENPASSANT ROW :=" << squareFile << "\n";
         enpassantFenIndex++;
         int squareRank = fenString[enpassantFenIndex] - '1';
-        std::cout << "ENPASSANT col :=" << squareRank << "\n";
         enPassantSquare = squareRank * BOARD_WIDTH + squareFile;
     }
 }
@@ -316,6 +314,94 @@ void Board::makeMove(Move &move) {
         removePiece(rookFrom, ROOK, color);
         placePiece(rookTo, ROOK, color);
     }
+}
+
+std::string Board::toFEN() const {
+    std::string fen;
+
+    // 1. Piece placement
+    for (int rank = 7; rank >= 0; rank--) {
+        int emptyCount = 0;
+
+        for (int file = 0; file < 8; file++) {
+            int square = rank * 8 + file;
+            auto [color, piece] = mailBox[square];
+
+            if (color == BOTH) {
+                emptyCount++;
+            } else {
+                if (emptyCount > 0) {
+                    fen += std::to_string(emptyCount);
+                    emptyCount = 0;
+                }
+
+                char pieceChar = ' ';
+                switch (piece) {
+                    case PAWN: pieceChar = 'p';
+                        break;
+                    case KNIGHT: pieceChar = 'n';
+                        break;
+                    case BISHOP: pieceChar = 'b';
+                        break;
+                    case ROOK: pieceChar = 'r';
+                        break;
+                    case QUEEN: pieceChar = 'q';
+                        break;
+                    case KING: pieceChar = 'k';
+                        break;
+                }
+
+                if (color == WHITE) {
+                    pieceChar = std::toupper(pieceChar);
+                }
+
+                fen += pieceChar;
+            }
+        }
+
+        if (emptyCount > 0) {
+            fen += std::to_string(emptyCount);
+        }
+
+        if (rank > 0) {
+            fen += '/';
+        }
+    }
+
+    // 2. Side to move
+    fen += ' ';
+    fen += (side == WHITE ? 'w' : 'b');
+
+    // 3. Castling rights
+    fen += ' ';
+    std::string castling = "";
+
+    if (castleRights & WHITE_KING_SIDE_CASTLE_MASK) castling += 'K';
+    if (castleRights & WHITE_QUEEN_SIDE_CASTLE_MASK) castling += 'Q';
+    if (castleRights & BLACK_KING_SIDE_CASTLE_MASK) castling += 'k';
+    if (castleRights & BLACK_QUEEN_SIDE_CASTLE_MASK) castling += 'q';
+
+    fen += (castling.empty() ? "-" : castling);
+
+    // 4. En passant
+    fen += ' ';
+    if (enPassantSquare == -1) {
+        fen += '-';
+    } else {
+        int file = enPassantSquare % 8;
+        int rank = enPassantSquare / 8;
+
+        fen += static_cast<char>('a' + file);
+        fen += static_cast<char>('1' + rank);
+    }
+
+    // 5. Halfmove clock (not tracked yet)
+    fen += " 0";
+
+    // 6. Fullmove number (not tracked yet)
+    fen += " 1";
+
+    return fen;
 }
 
 int Board::getCastleRights(Color color) const {

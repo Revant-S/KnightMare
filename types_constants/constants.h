@@ -153,6 +153,27 @@ inline std::string POSITION3_FEN = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
 inline std::string POSITION4_FEN = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq -";
 inline std::string POSITION5_FEN = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ -";
 
+inline const int pawnTable[64] = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    50, 50, 50, 50, 50, 50, 50, 50,
+    10, 10, 20, 30, 30, 20, 10, 10,
+    5, 5, 10, 25, 25, 10, 5, 5,
+    0, 0, 0, 20, 20, 0, 0, 0,
+    5, -5, -10, 0, 0, -10, -5, 5,
+    5, 10, 10, -20, -20, 10, 10, 5,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+inline const int knightTable[64] = {
+    -50, -40, -30, -30, -30, -30, -40, -50,
+    -40, -20, 0, 0, 0, 0, -20, -40,
+    -30, 0, 10, 15, 15, 10, 0, -30,
+    -30, 5, 15, 20, 20, 15, 5, -30,
+    -30, 0, 15, 20, 20, 15, 0, -30,
+    -30, 5, 10, 15, 15, 10, 5, -30,
+    -40, -20, 0, 5, 5, 0, -20, -40,
+    -50, -40, -30, -30, -30, -30, -40, -50
+};
 inline constexpr int DEPTH_OF_SEARCH = 3;
 
 #endif //CONSTANTS_H

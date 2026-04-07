@@ -1,6 +1,10 @@
 #include "utils.h"
 #include "../types_constants/constants.h"
 #include "../search/legal_move_generation/GeneratePseudoLegalMove.h"
+#include <cctype>
+#include <algorithm>
+
+#include "../search/legal_move_generation/MoveFunctions.h"
 
 namespace Utils {
     void printBitBoard(U64 bitBoard) {
@@ -106,32 +110,80 @@ namespace Utils {
     }
 
     MoveType getMoveType(const int from, const int to, Color color, Piece piece, Board &board) {
-        int enPassantSquare = board.getEnpassantSquare();
-        if (piece == KING && (abs(to - from) > 1)) {
+        // 1. Castling: A king moving exactly 2 squares
+        if (piece == KING && abs(to - from) == 2) {
             if (to > from) {
                 return CASTLE_KING_SIDE;
             }
             return CASTLE_QUEEN_SIDE;
         }
-        if (to == enPassantSquare) {
-            return EN_PASSANT;
+        int enPassantSquare = board.getEnpassantSquare();
+        if (piece == PAWN && enPassantSquare != -1 && to == enPassantSquare) {
+            if (from % 8 != to % 8) {
+                return EN_PASSANT;
+            }
         }
-        if (abs(from - to) == 16) {
+        if (piece == PAWN && abs(from - to) == 16) {
             return DOUBLE_PAWN_MOVE;
         }
-        if (checkPawnPromotion(color, to)) {
+        if (piece == PAWN && checkPawnPromotion(color, to)) {
             return PROMOTION;
         }
         return SIMPLE;
     }
 
-    Move parseMoveString(const std::string &moveStr, Board &board) {
-        const int from = (moveStr[1] - '1') * 8 + (moveStr[0] - 'a');
-        const int to = (moveStr[3] - '1') * 8 + (moveStr[2] - 'a');
-        auto [color, piece] = board.getPieceOnTheIndex(from);
-        MoveType moveType = getMoveType(from, to, color, piece, board);
-        return {from, to, color, piece, moveType};
+
+    std::string trim(const std::string &s) {
+        const auto begin = s.find_first_not_of(" \t\n\r\f\v");
+        if (begin == std::string::npos) return "";
+        const auto end = s.find_last_not_of(" \t\n\r\f\v");
+        return s.substr(begin, end - begin + 1);
     }
+
+    bool isValidFile(char c) {
+        return c >= 'a' && c <= 'h';
+    }
+
+    bool isValidRank(char c) {
+        return c >= '1' && c <= '8';
+    }
+
+    int squareFromUci(char fileChar, char rankChar) {
+        int file = fileChar - 'a';
+        int rank = rankChar - '1';
+        return rank * 8 + file;
+    }
+
+    Piece promotionPieceFromChar(char c) {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        switch (c) {
+            case 'q': return QUEEN;
+            case 'r': return ROOK;
+            case 'b': return BISHOP;
+            case 'n': return KNIGHT;
+            default: return QUEEN; // fallback — caller should only pass valid chars
+        }
+    }
+
+    Move parseMoveString(const std::string &moveStrRaw, Board &board) {
+        const std::string moveStr = trim(moveStrRaw);
+
+        const int from = squareFromUci(moveStr[0], moveStr[1]);
+        const int to = squareFromUci(moveStr[2], moveStr[3]);
+
+        auto [color, piece] = board.getPieceOnTheIndex(from);
+
+        Piece promoteTo = PAWN;
+        MoveType moveType = getMoveType(from, to, color, piece, board);
+
+        if (moveStr.size() == 5) {
+            moveType = PROMOTION;
+            promoteTo = promotionPieceFromChar(moveStr[4]);
+        }
+
+        return Move{from, to, color, piece, moveType, promoteTo};
+    }
+
 
     std::string getFenAfterMove(const std::string &fen, const std::string &move) {
         std::ofstream cmd("/tmp/sf_cmd.txt");
