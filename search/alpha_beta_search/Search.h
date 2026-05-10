@@ -11,6 +11,7 @@ namespace Search {
     int minMax(int depth , Board &board);
     int alphaBeta();
     Move getBestMove(Board &board);
+    MoveList OrderMoves(MoveList &moveList);
 } // Search
 
 #endif //SEARCH_H

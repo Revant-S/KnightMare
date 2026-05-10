@@ -46,7 +46,7 @@ namespace PreMatchAttackComputation {
             for (int direction = NORTH; direction <= WEST; direction++) {
                 int nextRank = rank + directions[direction].first;
                 int nextFile = file + directions[direction].second;
-                while (nextRank >= 0 && nextFile >= 0 && nextRank < BOARD_HEIGHT && nextFile < BOARD_WIDTH) {
+                while (nextRank >= 0 && nextFile >= 0 && nextRank < 3 && nextFile < BOARD_WIDTH) {
                     rookAttacks[i][direction] |= (static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile));
                     nextRank += directions[direction].first;
                     nextFile += directions[direction].second;

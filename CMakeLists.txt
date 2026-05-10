@@ -24,4 +24,10 @@ add_executable(chess main.cpp
         search/alpha_beta_search/Search.h
         search/evaluation/Evaluation.cpp
         search/evaluation/Evaluation.h
+        search/evaluation/EvaluationUtils.cpp
+        search/evaluation/EvaluationUtils.h
+        TranspositionTable/TransPositionTable.cpp
+        TranspositionTable/TransPositionTable.h
+        History/MoveHistory.cpp
+        History/MoveHistory.h
 )

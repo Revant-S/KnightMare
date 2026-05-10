@@ -5,6 +5,10 @@
 #include "Board.h"
 #include "../types_constants/types.h"
 #include <bitset>
+#include <random>
+#include <cstdint>
+
+#include "../utils/utils.h"
 
 Board::Board(const std::string &fenString) {
     int rank = 7, file = 0;
@@ -187,6 +191,38 @@ void Board::placePiece(const int square, Piece piece, Color color) {
 
 ColorPiece Board::getPieceOnTheIndex(const int index) const {
     return mailBox[index];
+}
+
+void Board::generateKeysForHashing() {
+    std::random_device rd;
+    std::mt19937_64 gen(rd());
+    std::uniform_int_distribution<uint64_t> distrib(0, UINT64_MAX);
+    for (int piece = PAWN; piece <= KING; piece++) {
+        for (int index = 0; index < 64; index++) {
+            for (int side = WHITE; side <= BLACK; side++) {
+                pieceKey[piece][index][side] = distrib(gen);
+            }
+        }
+    }
+}
+
+
+U64 Board::generatePositionHash() {
+    U64 allOccupancies = occupancies[BOTH];
+    const int firstPosition = Utils::getLSB(allOccupancies);
+    auto [color, piece] = mailBox[firstPosition];
+    U64 hashKey = getPieceKey(piece, color, firstPosition);
+    Utils::popLSB(allOccupancies);
+    while (allOccupancies) {
+        int position = Utils::getLSB(allOccupancies);
+        Utils::popLSB(allOccupancies);
+        hashKey ^= getPieceKey(mailBox[position].piece, mailBox[position].color, position);
+    }
+    return hashKey;
+}
+
+U64 Board::getPieceKey(Piece piece, Color color, int position) {
+    return pieceKey[piece][position][color];
 }
 
 void Board::handleCaptureForMove(Move &move) {

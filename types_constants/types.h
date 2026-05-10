@@ -1,10 +1,11 @@
 //
 // Created by revant-sinha on 3/6/26.
 //
-#include <bits/stdc++.h>
 
 #ifndef TYPES_H
 #define TYPES_H
+#include <cstdint>
+#include <array>
 
 typedef uint64_t U64;
 

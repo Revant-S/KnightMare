@@ -42,7 +42,7 @@ public:
 
     void makeMove(Move &move);
 
-    std::string toFEN() const ;
+    std::string toFEN() const;
 
     void handleCaptureForMove(Move &move);
 
@@ -52,10 +52,15 @@ public:
 
     void clearALlCastleRightsOf(Color color);
 
-    void clearCastleRight(Color color , Piece piece);
+    void clearCastleRight(Color color, Piece piece);
 
     ColorPiece getPieceOnTheIndex(int index) const;
 
+    void generateKeysForHashing();
+
+    U64 generatePositionHash();
+
+    U64 getPieceKey(Piece piece, Color color, int position);
 
     [[nodiscard]] int getCastleRights(Color color) const;
 
@@ -75,6 +80,7 @@ private:
 
     int castleRights = 0b1111; // black queen | black king white queen white king
     int enPassantSquare = -1;
-    std::array<ColorPiece , 64> mailBox;
+    std::array<ColorPiece, 64> mailBox;
+    std::array<std::array<std::array<U64, 2>, 64>, 6> pieceKey;
 };
 #endif //BOARD_H
