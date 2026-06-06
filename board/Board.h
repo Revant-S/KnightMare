@@ -56,11 +56,9 @@ public:
 
     ColorPiece getPieceOnTheIndex(int index) const;
 
-    void generateKeysForHashing();
+    U64 generatePositionHash() const;
 
-    U64 generatePositionHash();
-
-    U64 getPieceKey(Piece piece, Color color, int position);
+    [[nodiscard]] U64 getPositionHash() const;
 
     [[nodiscard]] int getCastleRights(Color color) const;
 
@@ -81,6 +79,8 @@ private:
     int castleRights = 0b1111; // black queen | black king white queen white king
     int enPassantSquare = -1;
     std::array<ColorPiece, 64> mailBox;
-    std::array<std::array<std::array<U64, 2>, 64>, 6> pieceKey;
+    U64 positionHash = 0;
+
+    void updateHashForStateChange(int previousCastleRights, int previousEnPassantSquare);
 };
 #endif //BOARD_H

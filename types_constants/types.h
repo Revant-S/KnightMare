@@ -65,6 +65,7 @@ struct BoardState {
     int enPassantSquare;
     int castleRights;
     Color side;
+    U64 positionHash;
 };
 
 #endif //TYPES_H

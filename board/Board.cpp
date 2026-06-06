@@ -10,6 +10,29 @@
 
 #include "../utils/utils.h"
 
+namespace {
+    struct ZobristKeys {
+        std::array<std::array<std::array<U64, 64>, 6>, 2> pieces{};
+        std::array<U64, 16> castleRights{};
+        std::array<U64, 8> enPassantFile{};
+        U64 blackToMove = 0;
+    };
+
+    ZobristKeys generateZobristKeys() {
+        std::mt19937_64 generator(0x4B6E696768744D61ULL);
+        ZobristKeys keys;
+        for (auto &colorKeys: keys.pieces)
+            for (auto &pieceKeys: colorKeys)
+                for (U64 &key: pieceKeys) key = generator();
+        for (U64 &key: keys.castleRights) key = generator();
+        for (U64 &key: keys.enPassantFile) key = generator();
+        keys.blackToMove = generator();
+        return keys;
+    }
+
+    const ZobristKeys zobristKeys = generateZobristKeys();
+}
+
 Board::Board(const std::string &fenString) {
     int rank = 7, file = 0;
     int sideIndex = 0;
@@ -70,10 +93,12 @@ Board::Board(const std::string &fenString) {
         int squareRank = fenString[enpassantFenIndex] - '1';
         enPassantSquare = squareRank * BOARD_WIDTH + squareFile;
     }
+    positionHash = generatePositionHash();
 }
 
 void Board::toggle_side() {
     side == WHITE ? side = BLACK : side = WHITE;
+    positionHash ^= zobristKeys.blackToMove;
 }
 
 void Board::print_board() const {
@@ -172,6 +197,7 @@ void Board::removePiece(const int square, Piece piece, Color color) {
     bitboards[color][piece] ^= pieceRemovalBitMask;
     occupancies[color] ^= pieceRemovalBitMask;
     occupancies[BOTH] ^= pieceRemovalBitMask;
+    positionHash ^= zobristKeys.pieces[color][piece][square];
     mailBox[square] = {
         BOTH,
         PAWN
@@ -183,6 +209,7 @@ void Board::placePiece(const int square, Piece piece, Color color) {
     bitboards[color][piece] |= placeMoveBitMask;
     occupancies[color] |= placeMoveBitMask;
     occupancies[BOTH] |= placeMoveBitMask;
+    positionHash ^= zobristKeys.pieces[color][piece][square];
     mailBox[square] = {
         color,
         piece
@@ -193,36 +220,33 @@ ColorPiece Board::getPieceOnTheIndex(const int index) const {
     return mailBox[index];
 }
 
-void Board::generateKeysForHashing() {
-    std::random_device rd;
-    std::mt19937_64 gen(rd());
-    std::uniform_int_distribution<uint64_t> distrib(0, UINT64_MAX);
-    for (int piece = PAWN; piece <= KING; piece++) {
-        for (int index = 0; index < 64; index++) {
-            for (int side = WHITE; side <= BLACK; side++) {
-                pieceKey[piece][index][side] = distrib(gen);
-            }
-        }
+U64 Board::generatePositionHash() const {
+    U64 hash = 0;
+    U64 pieces = occupancies[BOTH];
+    while (pieces) {
+        const int square = Utils::getLSB(pieces);
+        Utils::popLSB(pieces);
+        hash ^= zobristKeys.pieces[mailBox[square].color][mailBox[square].piece][square];
     }
+    hash ^= zobristKeys.castleRights[castleRights];
+    if (enPassantSquare != -1) hash ^= zobristKeys.enPassantFile[enPassantSquare % BOARD_WIDTH];
+    if (side == BLACK) hash ^= zobristKeys.blackToMove;
+    return hash;
 }
 
-
-U64 Board::generatePositionHash() {
-    U64 allOccupancies = occupancies[BOTH];
-    const int firstPosition = Utils::getLSB(allOccupancies);
-    auto [color, piece] = mailBox[firstPosition];
-    U64 hashKey = getPieceKey(piece, color, firstPosition);
-    Utils::popLSB(allOccupancies);
-    while (allOccupancies) {
-        int position = Utils::getLSB(allOccupancies);
-        Utils::popLSB(allOccupancies);
-        hashKey ^= getPieceKey(mailBox[position].piece, mailBox[position].color, position);
-    }
-    return hashKey;
+U64 Board::getPositionHash() const {
+    return positionHash;
 }
 
-U64 Board::getPieceKey(Piece piece, Color color, int position) {
-    return pieceKey[piece][position][color];
+void Board::updateHashForStateChange(const int previousCastleRights, const int previousEnPassantSquare) {
+    if (previousCastleRights != castleRights) {
+        positionHash ^= zobristKeys.castleRights[previousCastleRights];
+        positionHash ^= zobristKeys.castleRights[castleRights];
+    }
+    if (previousEnPassantSquare != -1)
+        positionHash ^= zobristKeys.enPassantFile[previousEnPassantSquare % BOARD_WIDTH];
+    if (enPassantSquare != -1)
+        positionHash ^= zobristKeys.enPassantFile[enPassantSquare % BOARD_WIDTH];
 }
 
 void Board::handleCaptureForMove(Move &move) {
@@ -263,7 +287,8 @@ BoardState Board::saveState() {
         mailBox,
         enPassantSquare,
         castleRights,
-        side
+        side,
+        positionHash
     };
 }
 
@@ -274,6 +299,7 @@ void Board::unmakeMove(const BoardState savedState) {
     enPassantSquare = savedState.enPassantSquare;
     castleRights = savedState.castleRights;
     mailBox = savedState.mailBox;
+    positionHash = savedState.positionHash;
 }
 
 void Board::clearALlCastleRightsOf(Color color) {
@@ -302,28 +328,25 @@ void Board::clearCastleRight(Color color, Piece piece) {
 }
 
 void Board::makeMove(Move &move) {
-    Color color = move.colorOfPieceToMove;
+    const int previousCastleRights = castleRights;
+    const int previousEnPassantSquare = enPassantSquare;
+    const Color color = move.colorOfPieceToMove;
+    const MoveType moveType = move.moveType;
+    const Piece piece = move.piece;
+
     handleCaptureForMove(move);
-    removePiece(move.from, move.piece, color);
-    MoveType moveType = move.moveType;
-    if (moveType != PROMOTION) {
-        placePiece(move.to, move.piece, color);
-    } else {
-        placePiece(move.to, move.promoteTo, color);
-    }
+    removePiece(move.from, piece, color);
+    placePiece(move.to, moveType == PROMOTION ? move.promoteTo : piece, color);
     clearEnPassantSquare();
-    Piece piece = move.piece;
-    Color moveColor = move.colorOfPieceToMove;
-    if (move.piece == KING) {
+
+    if (piece == KING) {
         clearALlCastleRightsOf(color);
     }
     if (moveType == DOUBLE_PAWN_MOVE) {
         setEnPassantSquare(color == WHITE ? move.to - BOARD_WIDTH : move.to + BOARD_WIDTH);
-        return;
     }
-    // verify the logic
     if (piece == ROOK) {
-        if (moveColor == WHITE) {
+        if (color == WHITE) {
             if (move.from == WHITE_QUEEN_SIDE_ROOK_FROM) {
                 clearCastleRight(WHITE, QUEEN);
             } else if (move.from == WHITE_KING_SIDE_ROOK_FROM) {
@@ -350,6 +373,7 @@ void Board::makeMove(Move &move) {
         removePiece(rookFrom, ROOK, color);
         placePiece(rookTo, ROOK, color);
     }
+    updateHashForStateChange(previousCastleRights, previousEnPassantSquare);
 }
 
 std::string Board::toFEN() const {
