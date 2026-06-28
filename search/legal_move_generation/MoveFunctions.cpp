@@ -83,4 +83,71 @@ namespace MoveFunctions {
         check(kings);
         return legalMoves;
     }
+
+    MoveList getAllLegalCaptures(Board &board) {
+        MoveList legalCaptures;
+        auto collectCaptures = [&](MoveList &pseudoMoves) {
+            for (Move &move: pseudoMoves) {
+                const bool isTactical = isCapture(move, board) ||
+                                        (move.moveType == PROMOTION && move.promoteTo == QUEEN);
+                if (isTactical && LegalMoveFilter::isMoveLegal(board, move)) {
+                    legalCaptures.addMove(move);
+                }
+            }
+        };
+        auto pawns = GeneratePseudoLegalMove::getPawnPseudoLegalMoves(board);
+        auto knights = GeneratePseudoLegalMove::getKnightPseudoLegalMoves(board);
+        auto bishops = GeneratePseudoLegalMove::getBishopPseudoLegalMoves(board);
+        auto rooks = GeneratePseudoLegalMove::getRookPseudoLegalMoves(board);
+        auto queens = GeneratePseudoLegalMove::getQueenPseudoLegalMoves(board);
+        auto kings = GeneratePseudoLegalMove::getKingPseudoLegalMoves(board);
+
+        collectCaptures(pawns);
+        collectCaptures(knights);
+        collectCaptures(bishops);
+        collectCaptures(rooks);
+        collectCaptures(queens);
+        collectCaptures(kings);
+        return legalCaptures;
+    }
+
+    bool isCapture(const Move &move, const Board &board) {
+        if (move.moveType == EN_PASSANT) return true;
+        const Color enemy = (move.colorOfPieceToMove == WHITE) ? BLACK : WHITE;
+        return board.getOccupancies(enemy) & (1ULL << move.to);
+    }
+
+    U64 getRookAttacks(const int square, const U64 occupancy) {
+        U64 attacks = 0;
+        for (int direction = NORTH; direction <= WEST; direction++) {
+            const U64 fullRay = PreMatchAttackComputation::rookAttacks[square][direction];
+            const U64 blockers = fullRay & occupancy;
+            if (!blockers) {
+                attacks |= fullRay;
+                continue;
+            }
+            const int nearestBlocker = (direction == NORTH || direction == EAST)
+                                           ? Utils::getLSB(blockers)
+                                           : Utils::getMSB(blockers);
+            attacks |= fullRay ^ PreMatchAttackComputation::rookAttacks[nearestBlocker][direction];
+        }
+        return attacks;
+    }
+
+    U64 getBishopAttacks(const int square, const U64 occupancy) {
+        U64 attacks = 0;
+        for (int direction = NORTH_EAST; direction <= SOUTH_WEST; direction++) {
+            const U64 fullRay = PreMatchAttackComputation::bishopAttacks[square][direction - 4];
+            const U64 blockers = fullRay & occupancy;
+            if (!blockers) {
+                attacks |= fullRay;
+                continue;
+            }
+            const int nearestBlocker = (direction == NORTH_EAST || direction == NORTH_WEST)
+                                           ? Utils::getLSB(blockers)
+                                           : Utils::getMSB(blockers);
+            attacks |= fullRay ^ PreMatchAttackComputation::bishopAttacks[nearestBlocker][direction - 4];
+        }
+        return attacks;
+    }
 } // MoveFunctions
