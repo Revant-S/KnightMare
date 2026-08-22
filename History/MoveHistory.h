@@ -9,9 +9,20 @@
 
 namespace MoveHistory {
     class MoveHistory {
-        void addMoveToHistoryTable(Move &move);
+    public:
+        void clear();
+
+        void addPosition(U64 positionHash, bool isIrreversibleMove);
+
+        void removeLastPosition();
+
+        [[nodiscard]] bool isRepetition(U64 positionHash) const;
+
+        [[nodiscard]] int pliesSinceIrreversibleMove() const;
+
     private:
-        std::vector<U64> moveHistory;
+        std::vector<U64> positionHashes;
+        std::vector<int> lastIrreversibleIndex;
     };
 } // MoveHistory
 
