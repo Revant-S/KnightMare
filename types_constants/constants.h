@@ -139,10 +139,6 @@ inline const std::array<std::string, 6> moveTypeString = {
     "CASTLE_QUEEN_SIDE", "EN_PASSANT", "DOUBLE_PAWN_MOVE"
 };
 
-inline const std::array<int, 6> pieceRelatialue = {
-    100, 300, 300, 500, 900, 1000000
-};
-
 inline std::string NORMAL_START_POSITION_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 inline std::string KIWIPETE_PERFT_START_FEN = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 inline std::string POSITION3_FEN = "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -";
@@ -252,6 +248,30 @@ inline std::array<std::array<int, 64>, 7> pstTable =
 
     }
 };
-inline constexpr int DEPTH_OF_SEARCH = 4;
+inline constexpr std::array<int, 6> endGameMaterialWeight = {
+    120, 290, 310, 540, 960, 20000
+};
+
+// Pieces laid out from white's view, rank 8 first, same as pstTable
+inline constexpr std::array<int, 64> pawnEndGameTable = {
+    0, 0, 0, 0, 0, 0, 0, 0,
+    80, 80, 80, 80, 80, 80, 80, 80,
+    50, 50, 50, 50, 50, 50, 50, 50,
+    30, 30, 30, 30, 30, 30, 30, 30,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+inline constexpr std::array<int, 8> passedPawnMidGameBonus = {0, 5, 10, 15, 25, 40, 60, 0};
+inline constexpr std::array<int, 8> passedPawnEndGameBonus = {0, 10, 15, 25, 45, 75, 120, 0};
+
+inline constexpr std::array<int, 6> gamePhaseWeight = {0, 1, 1, 2, 4, 0};
+inline constexpr int TOTAL_GAME_PHASE = 24;
+
+inline constexpr U64 FILE_A_MASK = 0x0101010101010101ULL;
+
+inline constexpr int MAX_SEARCH_DEPTH = 64;
 
 #endif //CONSTANTS_H
