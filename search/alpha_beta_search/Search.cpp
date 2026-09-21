@@ -6,72 +6,328 @@
 
 #include "../evaluation/Evaluation.h"
 #include "../legal_move_generation/MoveFunctions.h"
-#include <limits>
-#include <algorithm>
-
+#include "../../TranspositionTable/TransPositionTable.h"
 #include "../../utils/utils.h"
-#include "../evaluation/EvaluationUtils.h"
+#include <chrono>
+#include <iostream>
 
 namespace Search {
-    // Safe infinity values to prevent Negamax overflow
-    const int INF = 1000000;
-    const int MATE_SCORE = -100000;
+    namespace {
+        constexpr int INFINITY_SCORE = 1'000'000;
+        constexpr int MATE_SCORE = 100'000;
+        constexpr int MATE_THRESHOLD = MATE_SCORE - 1'000;
+        constexpr int MAX_PLY = 128;
+        constexpr long long TIME_CHECK_INTERVAL = 2048;
+        constexpr int TT_MOVE_PRIORITY = 1'000'000;
+        constexpr int CAPTURE_PRIORITY = 100'000;
+        constexpr int PROMOTION_PRIORITY = 90'000;
+        constexpr int FIRST_KILLER_PRIORITY = 80'000;
+        constexpr int SECOND_KILLER_PRIORITY = 79'000;
+        constexpr int MAX_HISTORY_PRIORITY = 70'000;
+        constexpr int DELTA_PRUNING_MARGIN = 200;
+        constexpr int FIFTY_MOVE_RULE_PLIES = 100;
+        constexpr int DEFAULT_MOVES_TO_GO = 30;
+        constexpr long long MOVE_OVERHEAD_MS = 30;
 
-    int minMax(const int depth, Board &board) {
-        // Base case: static evaluation
-        if (depth == 0) {
-            return Evaluation::evaluate(board);
+        using Clock = std::chrono::steady_clock;
+        Clock::time_point searchStart;
+        long long timeBudgetMs = -1;
+        long long nodesSearched = 0;
+        bool stopRequested = false;
+        MoveHistory::MoveHistory *gameHistory = nullptr;
+        std::array<std::array<Move, 2>, MAX_PLY> killerMoves;
+        std::array<std::array<std::array<int, 64>, 64>, 2> historyScores;
+
+        bool isSameMove(const Move &first, const Move &second) {
+            return first.from == second.from && first.to == second.to && first.promoteTo == second.promoteTo;
         }
 
-        int maxScore = -INF;
-        MoveList legalMoves = MoveFunctions::getAllLegalMoves(board);
+        long long elapsedMs() {
+            return std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - searchStart).count();
+        }
 
-        // Checkmate and Stalemate =
-        if (legalMoves.isEmpty()) {
-            if (MoveFunctions::isKingInCheck(board.getSide(), board)) {
-                return MATE_SCORE - depth;
-            } else {
-                return 0; // stalemate
+        void checkTimeLimit() {
+            if (nodesSearched % TIME_CHECK_INTERVAL == 0 && timeBudgetMs >= 0 && elapsedMs() >= timeBudgetMs)
+                stopRequested = true;
+        }
+
+        int scoreToTable(const int score, const int ply) {
+            if (score > MATE_THRESHOLD) return score + ply;
+            if (score < -MATE_THRESHOLD) return score - ply;
+            return score;
+        }
+
+        int scoreFromTable(const int score, const int ply) {
+            if (score > MATE_THRESHOLD) return score - ply;
+            if (score < -MATE_THRESHOLD) return score + ply;
+            return score;
+        }
+
+        void makeSearchMove(Board &board, Move &move) {
+            const bool isIrreversible = move.piece == PAWN || MoveFunctions::isCapture(move, board);
+            board.makeMove(move);
+            board.toggle_side();
+            gameHistory->addPosition(board.getPositionHash(), isIrreversible);
+        }
+
+        void undoSearchMove(Board &board, const BoardState &savedState) {
+            gameHistory->removeLastPosition();
+            board.unmakeMove(savedState);
+        }
+
+        int moveOrderingScore(const Move &move, const Board &board, const Move &ttMove, const int ply) {
+            if (isSameMove(move, ttMove)) return TT_MOVE_PRIORITY;
+            if (MoveFunctions::isCapture(move, board)) {
+                const Piece victim = move.moveType == EN_PASSANT ? PAWN : board.getPieceOnTheIndex(move.to).piece;
+                return CAPTURE_PRIORITY + 10 * victim - move.piece;
+            }
+            if (move.moveType == PROMOTION) return PROMOTION_PRIORITY + move.promoteTo;
+            if (ply < MAX_PLY) {
+                if (isSameMove(move, killerMoves[ply][0])) return FIRST_KILLER_PRIORITY;
+                if (isSameMove(move, killerMoves[ply][1])) return SECOND_KILLER_PRIORITY;
+            }
+            return std::min(historyScores[move.colorOfPieceToMove][move.from][move.to], MAX_HISTORY_PRIORITY);
+        }
+
+        void pickNextMove(MoveList &moves, std::array<int, 256> &scores, const int startIndex) {
+            int bestIndex = startIndex;
+            for (int index = startIndex + 1; index < moves.size(); index++) {
+                if (scores[index] > scores[bestIndex]) bestIndex = index;
+            }
+            std::swap(moves[startIndex], moves[bestIndex]);
+            std::swap(scores[startIndex], scores[bestIndex]);
+        }
+
+        void recordQuietCutoff(const Move &move, const int depth, const int ply) {
+            if (ply < MAX_PLY && !isSameMove(move, killerMoves[ply][0])) {
+                killerMoves[ply][1] = killerMoves[ply][0];
+                killerMoves[ply][0] = move;
+            }
+            historyScores[move.colorOfPieceToMove][move.from][move.to] += depth * depth;
+        }
+
+        int lateMoveReduction(const int depth, const int moveIndex, const bool isQuiet, const bool inCheck) {
+            if (depth < 3 || moveIndex < 4 || !isQuiet || inCheck) return 0;
+            return moveIndex >= 12 ? 2 : 1;
+        }
+
+        std::string formatScore(const int score) {
+            if (score > MATE_THRESHOLD) return "mate " + std::to_string((MATE_SCORE - score + 1) / 2);
+            if (score < -MATE_THRESHOLD) return "mate -" + std::to_string((MATE_SCORE + score) / 2);
+            return "cp " + std::to_string(score);
+        }
+
+        std::string principalVariation(Board board, const int depth) {
+            std::string line;
+            for (int ply = 0; ply < depth; ply++) {
+                TranspositionTable::Entry entry;
+                if (!TranspositionTable::probe(board.getPositionHash(), entry) || entry.bestMove.from == -1) break;
+                bool isLegal = false;
+                for (Move &move: MoveFunctions::getAllLegalMoves(board)) {
+                    if (isSameMove(move, entry.bestMove)) isLegal = true;
+                }
+                if (!isLegal) break;
+                line += Utils::moveToString(entry.bestMove) + " ";
+                board.makeMove(entry.bestMove);
+                board.toggle_side();
+            }
+            return line;
+        }
+
+        void resetSearchState(MoveHistory::MoveHistory &history, const SearchLimits &limits) {
+            searchStart = Clock::now();
+            timeBudgetMs = limits.timeBudgetMs;
+            nodesSearched = 0;
+            stopRequested = false;
+            gameHistory = &history;
+            for (auto &killers: killerMoves) killers = {Move{}, Move{}};
+            for (auto &colorScores: historyScores)
+                for (auto &fromScores: colorScores) fromScores.fill(0);
+        }
+    }
+
+    long long computeTimeBudget(const long long remainingMs, const long long incrementMs, const int movesToGo) {
+        const int movesLeft = movesToGo > 0 ? movesToGo : DEFAULT_MOVES_TO_GO;
+        const long long budget = std::min(remainingMs / movesLeft + incrementMs * 3 / 4, remainingMs / 3);
+        return std::max(budget - MOVE_OVERHEAD_MS, 5LL);
+    }
+
+    void orderMoves(MoveList &moves, std::array<int, 256> &scores, const Board &board, const Move &ttMove,
+                    const int ply) {
+        for (int index = 0; index < moves.size(); index++) {
+            scores[index] = moveOrderingScore(moves[index], board, ttMove, ply);
+        }
+    }
+
+    int quiescence(Board &board, int alpha, const int beta, const int ply) {
+        nodesSearched++;
+        checkTimeLimit();
+        if (stopRequested) return 0;
+
+        const int standPat = Evaluation::evaluate(board);
+        if (ply >= MAX_PLY - 1 || standPat >= beta) return standPat;
+        alpha = std::max(alpha, standPat);
+
+        MoveList captures = MoveFunctions::getAllLegalCaptures(board);
+        std::array<int, 256> scores{};
+        orderMoves(captures, scores, board, Move{}, ply);
+
+        int bestScore = standPat;
+        for (int index = 0; index < captures.size(); index++) {
+            pickNextMove(captures, scores, index);
+            Move &move = captures[index];
+            const Piece victim = move.moveType == EN_PASSANT ? PAWN : board.getPieceOnTheIndex(move.to).piece;
+            if (move.moveType != PROMOTION && standPat + materialWeight[victim] + DELTA_PRUNING_MARGIN < alpha)
+                continue;
+
+            const BoardState savedState = board.saveState();
+            board.makeMove(move);
+            board.toggle_side();
+            const int score = -quiescence(board, -beta, -alpha, ply + 1);
+            board.unmakeMove(savedState);
+            if (stopRequested) return 0;
+
+            if (score > bestScore) bestScore = score;
+            if (score >= beta) return score;
+            alpha = std::max(alpha, score);
+        }
+        return bestScore;
+    }
+
+    int alphaBeta(Board &board, int depth, int alpha, const int beta, const int ply) {
+        const U64 positionHash = board.getPositionHash();
+        if (ply > 0 && (gameHistory->isRepetition(positionHash) ||
+                        gameHistory->pliesSinceIrreversibleMove() >= FIFTY_MOVE_RULE_PLIES))
+            return 0;
+
+        const bool inCheck = MoveFunctions::isKingInCheck(board.getSide(), board);
+        if (inCheck) depth++;
+        if (depth <= 0) return quiescence(board, alpha, beta, ply);
+        if (ply >= MAX_PLY - 1) return Evaluation::evaluate(board);
+
+        nodesSearched++;
+        checkTimeLimit();
+        if (stopRequested) return 0;
+
+        const bool isPvNode = beta - alpha > 1;
+        Move ttMove;
+        TranspositionTable::Entry entry;
+        if (TranspositionTable::probe(positionHash, entry)) {
+            ttMove = entry.bestMove;
+            if (!isPvNode && entry.depth >= depth) {
+                const int ttScore = scoreFromTable(entry.score, ply);
+                if (entry.bound == TranspositionTable::EXACT) return ttScore;
+                if (entry.bound == TranspositionTable::LOWER_BOUND && ttScore >= beta) return ttScore;
+                if (entry.bound == TranspositionTable::UPPER_BOUND && ttScore <= alpha) return ttScore;
             }
         }
 
-        for (Move &move: legalMoves) {
-            BoardState savedState = board.saveState();
-            board.makeMove(move);
-            int score = -minMax(depth - 1, board);
-            board.unmakeMove(savedState);
-            maxScore = std::max(maxScore, score);
-        }
-        return maxScore;
-    }
+        MoveList moves = MoveFunctions::getAllLegalMoves(board);
+        if (moves.isEmpty()) return inCheck ? -MATE_SCORE + ply : 0;
 
-    Move getBestMove(Board &board) {
-        MoveList legalMoves = MoveFunctions::getAllLegalMoves(board);
-        if (legalMoves.isEmpty()) {
-            return {};
-        }
+        std::array<int, 256> scores{};
+        orderMoves(moves, scores, board, ttMove, ply);
 
-        int maxScore = -INF;
-        Move bestMove = legalMoves[0];
+        const int originalAlpha = alpha;
+        int bestScore = -INFINITY_SCORE;
+        Move bestMove;
+        for (int index = 0; index < moves.size(); index++) {
+            pickNextMove(moves, scores, index);
+            Move &move = moves[index];
+            const bool isQuiet = !MoveFunctions::isCapture(move, board) && move.moveType != PROMOTION;
 
-        // Ensure DEPTH_OF_SEARCH is at least 2, otherwise it can't see mates!
-        int currentDepth = std::max(2, DEPTH_OF_SEARCH);
-        for (auto &move: legalMoves) {
-            BoardState savedState = board.saveState();
-            board.makeMove(move);
-            // board.toggle_side(); // REMOVE THIS IF makeMove() ALREADY TOGGLES THE TURN
-            int score = -minMax(currentDepth - 1, board);
-            // EvaluationUtils::printScoreBreakDown(board, move);
-            board.unmakeMove(savedState);
-            // std::cout << "Move : " << Utils::moveToString(move) << " has calculate score of <<" << score << "\n";
-            if (score > maxScore) {
-                maxScore = score;
+            const BoardState savedState = board.saveState();
+            makeSearchMove(board, move);
+            int score;
+            if (index == 0) {
+                score = -alphaBeta(board, depth - 1, -beta, -alpha, ply + 1);
+            } else {
+                const int reduction = lateMoveReduction(depth, index, isQuiet, inCheck);
+                score = -alphaBeta(board, depth - 1 - reduction, -alpha - 1, -alpha, ply + 1);
+                if (score > alpha && reduction > 0)
+                    score = -alphaBeta(board, depth - 1, -alpha - 1, -alpha, ply + 1);
+                if (score > alpha && score < beta)
+                    score = -alphaBeta(board, depth - 1, -beta, -alpha, ply + 1);
+            }
+            undoSearchMove(board, savedState);
+            if (stopRequested) return 0;
+
+            if (score > bestScore) {
+                bestScore = score;
                 bestMove = move;
             }
+            if (score > alpha) alpha = score;
+            if (alpha >= beta) {
+                if (isQuiet) recordQuietCutoff(move, depth, ply);
+                break;
+            }
         }
-        return bestMove;
+
+        const TranspositionTable::Bound bound = bestScore <= originalAlpha
+                                                    ? TranspositionTable::UPPER_BOUND
+                                                    : bestScore >= beta
+                                                          ? TranspositionTable::LOWER_BOUND
+                                                          : TranspositionTable::EXACT;
+        TranspositionTable::store(positionHash, depth, scoreToTable(bestScore, ply), bound,
+                                  bound == TranspositionTable::UPPER_BOUND ? Move{} : bestMove);
+        return bestScore;
     }
 
-    MoveList OrderMoves(MoveList &moveList) {
+    Move getBestMove(Board &board, MoveHistory::MoveHistory &history, const SearchLimits &limits) {
+        resetSearchState(history, limits);
+        MoveList rootMoves = MoveFunctions::getAllLegalMoves(board);
+        if (rootMoves.isEmpty()) return {};
+        if (rootMoves.size() == 1) return rootMoves[0];
+
+        Move bestMove = rootMoves[0];
+        for (int depth = 1; depth <= limits.maxDepth; depth++) {
+            std::array<int, 256> scores{};
+            orderMoves(rootMoves, scores, board, bestMove, 0);
+
+            int alpha = -INFINITY_SCORE;
+            Move iterationBestMove;
+            int iterationBestScore = -INFINITY_SCORE;
+            for (int index = 0; index < rootMoves.size(); index++) {
+                pickNextMove(rootMoves, scores, index);
+                Move &move = rootMoves[index];
+
+                const BoardState savedState = board.saveState();
+                makeSearchMove(board, move);
+                int score;
+                if (index == 0) {
+                    score = -alphaBeta(board, depth - 1, -INFINITY_SCORE, -alpha, 1);
+                } else {
+                    score = -alphaBeta(board, depth - 1, -alpha - 1, -alpha, 1);
+                    if (score > alpha && !stopRequested)
+                        score = -alphaBeta(board, depth - 1, -INFINITY_SCORE, -alpha, 1);
+                }
+                undoSearchMove(board, savedState);
+                if (stopRequested) break;
+
+                if (score > iterationBestScore) {
+                    iterationBestScore = score;
+                    iterationBestMove = move;
+                    alpha = score;
+                }
+            }
+
+            if (iterationBestMove.from != -1) bestMove = iterationBestMove;
+            if (stopRequested) break;
+
+            TranspositionTable::store(board.getPositionHash(), depth, iterationBestScore, TranspositionTable::EXACT,
+                                      bestMove);
+            const long long elapsed = elapsedMs();
+            std::cout << "info depth " << depth
+                    << " score " << formatScore(iterationBestScore)
+                    << " nodes " << nodesSearched
+                    << " time " << elapsed
+                    << " nps " << nodesSearched * 1000 / std::max(elapsed, 1LL)
+                    << " pv " << principalVariation(board, depth) << "\n";
+            std::cout.flush();
+
+            if (std::abs(iterationBestScore) > MATE_THRESHOLD) break;
+            if (timeBudgetMs >= 0 && elapsed * 2 >= timeBudgetMs) break;
+        }
+        return bestMove;
     }
 } // Search
