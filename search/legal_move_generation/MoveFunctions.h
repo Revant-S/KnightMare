@@ -19,6 +19,8 @@ namespace MoveFunctions {
     MoveList getAllLegalCaptures(Board &board);
 
     bool isCapture(const Move &move, const Board &board);
+
+    int staticExchange(const Move &move, const Board &board);
 } // MoveFunctions
 
 #endif //MOVEFUNCTIONS_H

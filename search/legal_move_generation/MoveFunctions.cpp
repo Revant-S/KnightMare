@@ -119,4 +119,40 @@ namespace MoveFunctions {
         const Color enemy = (move.colorOfPieceToMove == WHITE) ? BLACK : WHITE;
         return board.getOccupancies(enemy) & (1ULL << move.to);
     }
+
+    int staticExchange(const Move &move, const Board &board) {
+        std::array<int, 32> gain{};
+        U64 occupancy = board.getOccupancies(BOTH) ^ (1ULL << move.from);
+        if (move.moveType == EN_PASSANT) {
+            occupancy ^= 1ULL << (move.colorOfPieceToMove == WHITE ? move.to - BOARD_WIDTH : move.to + BOARD_WIDTH);
+            gain[0] = materialWeight[PAWN];
+        } else {
+            gain[0] = isCapture(move, board) ? materialWeight[board.getPieceOnTheIndex(move.to).piece] : 0;
+        }
+
+        Piece pieceOnTarget = move.moveType == PROMOTION ? move.promoteTo : move.piece;
+        Color side = move.colorOfPieceToMove;
+        int exchangeDepth = 0;
+        while (exchangeDepth < 31) {
+            side = side == WHITE ? BLACK : WHITE;
+            const U64 attackers = attackersTo(move.to, side, occupancy, board) & occupancy;
+            if (!attackers) break;
+
+            exchangeDepth++;
+            gain[exchangeDepth] = materialWeight[pieceOnTarget] - gain[exchangeDepth - 1];
+
+            for (int piece = PAWN; piece <= KING; piece++) {
+                const U64 candidates = attackers & board.getPieceBitBoard(static_cast<Piece>(piece), side);
+                if (!candidates) continue;
+                occupancy ^= candidates & -candidates;
+                pieceOnTarget = static_cast<Piece>(piece);
+                break;
+            }
+        }
+        while (exchangeDepth > 0) {
+            gain[exchangeDepth - 1] = -std::max(-gain[exchangeDepth - 1], gain[exchangeDepth]);
+            exchangeDepth--;
+        }
+        return gain[0];
+    }
 } // MoveFunctions
