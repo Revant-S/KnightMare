@@ -50,17 +50,19 @@ namespace Utils {
     }
 
     void printAllPseudoLegalMoves(Board &board) {
-        auto printSection = [&](const std::string &label, MoveList moves) {
+        auto printSection = [&](const std::string &label, void (*generate)(Board &, MoveList &)) {
+            MoveList moves;
+            generate(board, moves);
             std::cout << "\n--- " << label << " ---\n";
             printMoves(moves);
         };
 
-        printSection("KNIGHT", GeneratePseudoLegalMove::getKnightPseudoLegalMoves(board));
-        printSection("ROOK", GeneratePseudoLegalMove::getRookPseudoLegalMoves(board));
-        printSection("BISHOP", GeneratePseudoLegalMove::getBishopPseudoLegalMoves(board));
-        printSection("QUEEN", GeneratePseudoLegalMove::getQueenPseudoLegalMoves(board));
-        printSection("KING", GeneratePseudoLegalMove::getKingPseudoLegalMoves(board));
-        printSection("PAWN", GeneratePseudoLegalMove::getPawnPseudoLegalMoves(board));
+        printSection("KNIGHT", GeneratePseudoLegalMove::getKnightPseudoLegalMoves);
+        printSection("ROOK", GeneratePseudoLegalMove::getRookPseudoLegalMoves);
+        printSection("BISHOP", GeneratePseudoLegalMove::getBishopPseudoLegalMoves);
+        printSection("QUEEN", GeneratePseudoLegalMove::getQueenPseudoLegalMoves);
+        printSection("KING", GeneratePseudoLegalMove::getKingPseudoLegalMoves);
+        printSection("PAWN", GeneratePseudoLegalMove::getPawnPseudoLegalMoves);
 
         std::cout << "\n--- EN PASSANT SQUARE ---\n";
         int ep = board.getEnpassantSquare();

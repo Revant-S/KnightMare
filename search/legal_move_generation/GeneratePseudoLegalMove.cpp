@@ -7,166 +7,53 @@
 #include "../../utils/utils.h"
 
 namespace GeneratePseudoLegalMove {
-    MoveList getKnightPseudoLegalMoves(Board &board) {
-        const Color side = board.getSide();
-        const U64 friendlyOccupancy = board.getOccupancies(side);
-        U64 knightPositions = board.getPieceBitBoard(KNIGHT, side);
-        MoveList knightMoves;
-        while (knightPositions) {
-            const int knightPosition = Utils::getLSB(knightPositions);
-            Utils::popLSB(knightPositions);
-            U64 attacks = PreMatchAttackComputation::knightAttacks[knightPosition] & ~friendlyOccupancy;
-            while (attacks) {
-                const int destination = Utils::getLSB(attacks);
-                Utils::popLSB(attacks);
-                knightMoves.addMove({
-                    knightPosition,
-                    destination,
-                    side,
-                    KNIGHT,
-                    SIMPLE
-                });
+    namespace {
+        void addMovesFromTargets(const int from, U64 targets, const Color side, const Piece piece, MoveList &moves) {
+            while (targets) {
+                const int destination = Utils::getLSB(targets);
+                Utils::popLSB(targets);
+                moves.addMove({from, destination, side, piece});
             }
         }
 
-        return knightMoves;
-    }
-
-    MoveList getRookPseudoLegalMoves(Board &board) {
-        const Color side = board.getSide();
-        const U64 friendlyOccupancies = board.getOccupancies(side);
-        const U64 totalOccupancy = board.getOccupancies(BOTH);
-        U64 rookPositions = board.getPieceBitBoard(ROOK, side);
-        MoveList rookMoves;
-        while (rookPositions) {
-            const int rookPosition = Utils::getLSB(rookPositions);
-            Utils::popLSB(rookPositions);
-            for (int direction = NORTH; direction <= WEST; direction++) {
-                const U64 blockers = PreMatchAttackComputation::rookAttacks[rookPosition][direction] & totalOccupancy;
-                U64 finalRay;
-                if (blockers) {
-                    int nearestBlocker;
-                    if (direction == NORTH || direction == EAST) {
-                        nearestBlocker = Utils::getLSB(blockers);
-                    } else {
-                        nearestBlocker = Utils::getMSB(blockers);
-                    }
-                    const U64 subtractRay = PreMatchAttackComputation::rookAttacks[nearestBlocker][direction];
-                    const U64 fullRay = PreMatchAttackComputation::rookAttacks[rookPosition][direction];
-                    finalRay = fullRay ^ subtractRay;
-                } else {
-                    finalRay = PreMatchAttackComputation::rookAttacks[rookPosition][direction];
-                }
-                finalRay &= ~friendlyOccupancies;
-                while (finalRay) {
-                    const int destination = Utils::getLSB(finalRay);
-                    Utils::popLSB(finalRay);
-                    rookMoves.addMove({
-                        rookPosition,
-                        destination,
-                        side,
-                        ROOK
-                    });
-                }
+        template<typename AttackFunction>
+        void addPieceMoves(Board &board, const Piece piece, MoveList &moves, AttackFunction attacksFrom) {
+            const Color side = board.getSide();
+            const U64 notFriendly = ~board.getOccupancies(side);
+            const U64 occupancy = board.getOccupancies(BOTH);
+            U64 pieces = board.getPieceBitBoard(piece, side);
+            while (pieces) {
+                const int from = Utils::getLSB(pieces);
+                Utils::popLSB(pieces);
+                addMovesFromTargets(from, attacksFrom(from, occupancy) & notFriendly, side, piece, moves);
             }
         }
-
-        return rookMoves;
     }
 
-    MoveList getBishopPseudoLegalMoves(Board &board) {
-        const Color side = board.getSide();
-        const U64 friendlyOccupancies = board.getOccupancies(side);
-        const U64 totalOccupancy = board.getOccupancies(BOTH);
-        U64 bishopPositions = board.getPieceBitBoard(BISHOP, side);
-
-        MoveList bishopMoves;
-        while (bishopPositions) {
-            const int bishopPosition = Utils::getLSB(bishopPositions);
-            Utils::popLSB(bishopPositions);
-            for (int direction = NORTH_EAST; direction <= SOUTH_WEST; direction++) {
-                const U64 fullRay = PreMatchAttackComputation::bishopAttacks[bishopPosition][direction - 4];
-                const U64 blockers = fullRay & totalOccupancy;
-                U64 finalRay;
-                if (blockers) {
-                    int nearestBlocker;
-                    U64 subtractRay;
-                    if (direction == NORTH_EAST || direction == NORTH_WEST) {
-                        nearestBlocker = Utils::getLSB(blockers);
-                        subtractRay = PreMatchAttackComputation::bishopAttacks[nearestBlocker][direction - 4];
-                    } else {
-                        nearestBlocker = Utils::getMSB(blockers);
-                        subtractRay = PreMatchAttackComputation::bishopAttacks[nearestBlocker][direction - 4];
-                    }
-                    finalRay = fullRay ^ subtractRay;
-                } else {
-                    finalRay = fullRay;
-                }
-                finalRay &= ~friendlyOccupancies;
-                while (finalRay) {
-                    const int destination = Utils::getLSB(finalRay);
-                    Utils::popLSB(finalRay);
-                    bishopMoves.addMove({
-                        bishopPosition,
-                        destination,
-                        side,
-                        BISHOP
-                    });
-                }
-            }
-        }
-        return bishopMoves;
+    void getKnightPseudoLegalMoves(Board &board, MoveList &moves) {
+        addPieceMoves(board, KNIGHT, moves, [](const int square, U64) {
+            return PreMatchAttackComputation::knightAttacks[square];
+        });
     }
 
-    MoveList getQueenPseudoLegalMoves(Board &board) {
-        const Color side = board.getSide();
-        const U64 friendlyOccupancy = board.getOccupancies(side);
-        const U64 totalOccupancy = board.getOccupancies(BOTH);
-        U64 queenPositions = board.getPieceBitBoard(QUEEN, side);
-        MoveList queenMoves;
-        while (queenPositions) {
-            const int queenPosition = Utils::getLSB(queenPositions);
-            Utils::popLSB(queenPositions);
-            for (int direction = NORTH; direction <= SOUTH_WEST; direction++) {
-                const U64 fullRay = PreMatchAttackComputation::queenAttacks[queenPosition][direction];
-                const U64 blockers = fullRay & totalOccupancy;
-                U64 finalRay = fullRay;
-                if (blockers) {
-                    int nearestBlocker;
-                    if (direction == NORTH || direction == EAST ||
-                        direction == NORTH_EAST || direction == NORTH_WEST) {
-                        nearestBlocker = Utils::getLSB(blockers);
-                    } else {
-                        nearestBlocker = Utils::getMSB(blockers);
-                    }
-
-                    const U64 subtractRay = PreMatchAttackComputation::queenAttacks[nearestBlocker][direction];
-                    finalRay = fullRay ^ subtractRay;
-                }
-                finalRay &= ~friendlyOccupancy;
-                while (finalRay) {
-                    const int destination = Utils::getLSB(finalRay);
-                    Utils::popLSB(finalRay);
-                    queenMoves.addMove({
-                        queenPosition,
-                        destination,
-                        side,
-                        QUEEN
-                    });
-                }
-            }
-        }
-        return queenMoves;
+    void getRookPseudoLegalMoves(Board &board, MoveList &moves) {
+        addPieceMoves(board, ROOK, moves, PreMatchAttackComputation::getRookAttacks);
     }
 
-    MoveList getKingPseudoLegalMoves(Board &board) {
+    void getBishopPseudoLegalMoves(Board &board, MoveList &moves) {
+        addPieceMoves(board, BISHOP, moves, PreMatchAttackComputation::getBishopAttacks);
+    }
+
+    void getQueenPseudoLegalMoves(Board &board, MoveList &moves) {
+        addPieceMoves(board, QUEEN, moves, PreMatchAttackComputation::getQueenAttacks);
+    }
+
+    void getKingPseudoLegalMoves(Board &board, MoveList &kingMoves) {
         const Color side = board.getSide();
         const U64 friendlyOccupancy = board.getOccupancies(side);
         const U64 totalOccupancy = board.getOccupancies(BOTH);
         U64 kingPositions = board.getPieceBitBoard(KING, side);
         const int castleRights = board.getCastleRights(side);
-
-        MoveList kingMoves;
 
         while (kingPositions) {
             const int kingPosition = Utils::getLSB(kingPositions);
@@ -221,10 +108,8 @@ namespace GeneratePseudoLegalMove {
                 }
             }
         }
-
-        return kingMoves;
     }
-    MoveList getPawnPseudoLegalMoves(Board &board) {
+    void getPawnPseudoLegalMoves(Board &board, MoveList &moves) {
         const Color side = board.getSide();
         const Color enemySide = (side == WHITE) ? BLACK : WHITE;
 
@@ -236,7 +121,6 @@ namespace GeneratePseudoLegalMove {
         const U64 totalOccupancies = board.getOccupancies(BOTH);
         U64 pawnPositions = board.getPieceBitBoard(PAWN, side);
         const int pawnForwardDisplacement = (side == WHITE) ? BOARD_WIDTH : -BOARD_WIDTH;
-        MoveList moves;
         while (pawnPositions) {
             const int pawnPosition = Utils::getLSB(pawnPositions);
             Utils::popLSB(pawnPositions);
@@ -284,7 +168,5 @@ namespace GeneratePseudoLegalMove {
                 }
             }
         }
-
-        return moves;
     }
 } // GenerateLegalMove

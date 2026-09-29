@@ -8,17 +8,17 @@
 #include "../../board/Board.h"
 
 namespace GeneratePseudoLegalMove {
-    MoveList getKnightPseudoLegalMoves(Board &board);
+    void getKnightPseudoLegalMoves(Board &board, MoveList &moves);
 
-    MoveList getRookPseudoLegalMoves(Board &board);
+    void getRookPseudoLegalMoves(Board &board, MoveList &moves);
 
-    MoveList getBishopPseudoLegalMoves(Board &board);
+    void getBishopPseudoLegalMoves(Board &board, MoveList &moves);
 
-    MoveList getQueenPseudoLegalMoves(Board &board);
+    void getQueenPseudoLegalMoves(Board &board, MoveList &moves);
 
-    MoveList getKingPseudoLegalMoves(Board &board);
+    void getKingPseudoLegalMoves(Board &board, MoveList &moves);
 
-    MoveList getPawnPseudoLegalMoves(Board &board);
+    void getPawnPseudoLegalMoves(Board &board, MoveList &moves);
 } // GenerateLegalMove
 
 #endif //GENERATEPSEUDOLEGALMOVE_H

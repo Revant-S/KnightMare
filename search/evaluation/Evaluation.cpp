@@ -70,10 +70,10 @@ namespace Evaluation {
         U64 pieceAttacks(const Piece piece, const int square, const U64 occupancy) {
             switch (piece) {
                 case KNIGHT: return PreMatchAttackComputation::knightAttacks[square];
-                case BISHOP: return MoveFunctions::getBishopAttacks(square, occupancy);
-                case ROOK: return MoveFunctions::getRookAttacks(square, occupancy);
-                case QUEEN: return MoveFunctions::getRookAttacks(square, occupancy) |
-                                   MoveFunctions::getBishopAttacks(square, occupancy);
+                case BISHOP: return PreMatchAttackComputation::getBishopAttacks(square, occupancy);
+                case ROOK: return PreMatchAttackComputation::getRookAttacks(square, occupancy);
+                case QUEEN: return PreMatchAttackComputation::getRookAttacks(square, occupancy) |
+                                   PreMatchAttackComputation::getBishopAttacks(square, occupancy);
                 default: return 0;
             }
         }
