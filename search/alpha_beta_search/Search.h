@@ -18,7 +18,7 @@ namespace Search {
 
     Move getBestMove(Board &board, MoveHistory::MoveHistory &history, const SearchLimits &limits);
 
-    int alphaBeta(Board &board, int depth, int alpha, int beta, int ply);
+    int alphaBeta(Board &board, int depth, int alpha, int beta, int ply, bool allowNullMove);
 
     int quiescence(Board &board, int alpha, int beta, int ply);
 

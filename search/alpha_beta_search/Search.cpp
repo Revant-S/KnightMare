@@ -24,9 +24,15 @@ namespace Search {
         constexpr int FIRST_KILLER_PRIORITY = 80'000;
         constexpr int SECOND_KILLER_PRIORITY = 79'000;
         constexpr int MAX_HISTORY_PRIORITY = 70'000;
+        constexpr int LOSING_CAPTURE_PRIORITY = -100'000;
         constexpr int DELTA_PRUNING_MARGIN = 200;
         constexpr int FIFTY_MOVE_RULE_PLIES = 100;
-        constexpr int DEFAULT_MOVES_TO_GO = 30;
+        constexpr int DEFAULT_MOVES_TO_GO = 20;
+        constexpr int REVERSE_FUTILITY_MAX_DEPTH = 6;
+        constexpr int REVERSE_FUTILITY_MARGIN_PER_DEPTH = 90;
+        constexpr int NULL_MOVE_MIN_DEPTH = 3;
+        constexpr int ASPIRATION_MIN_DEPTH = 5;
+        constexpr int ASPIRATION_WINDOW = 40;
         constexpr long long MOVE_OVERHEAD_MS = 30;
 
         using Clock = std::chrono::steady_clock;
@@ -79,7 +85,11 @@ namespace Search {
             if (isSameMove(move, ttMove)) return TT_MOVE_PRIORITY;
             if (MoveFunctions::isCapture(move, board)) {
                 const Piece victim = move.moveType == EN_PASSANT ? PAWN : board.getPieceOnTheIndex(move.to).piece;
-                return CAPTURE_PRIORITY + 10 * victim - move.piece;
+                const int mostValuableVictimFirst = 10 * victim - move.piece;
+                const bool mayLoseMaterial = materialWeight[move.piece] > materialWeight[victim];
+                if (mayLoseMaterial && MoveFunctions::staticExchange(move, board) < 0)
+                    return LOSING_CAPTURE_PRIORITY + mostValuableVictimFirst;
+                return CAPTURE_PRIORITY + mostValuableVictimFirst;
             }
             if (move.moveType == PROMOTION) return PROMOTION_PRIORITY + move.promoteTo;
             if (ply < MAX_PLY) {
@@ -104,6 +114,11 @@ namespace Search {
                 killerMoves[ply][0] = move;
             }
             historyScores[move.colorOfPieceToMove][move.from][move.to] += depth * depth;
+        }
+
+        bool hasNonPawnMaterial(const Board &board, const Color side) {
+            return board.getPieceBitBoard(KNIGHT, side) | board.getPieceBitBoard(BISHOP, side) |
+                   board.getPieceBitBoard(ROOK, side) | board.getPieceBitBoard(QUEEN, side);
         }
 
         int lateMoveReduction(const int depth, const int moveIndex, const bool isQuiet, const bool inCheck) {
@@ -163,22 +178,31 @@ namespace Search {
         nodesSearched++;
         checkTimeLimit();
         if (stopRequested) return 0;
+        if (ply >= MAX_PLY - 1) return Evaluation::evaluate(board);
 
-        const int standPat = Evaluation::evaluate(board);
-        if (ply >= MAX_PLY - 1 || standPat >= beta) return standPat;
-        alpha = std::max(alpha, standPat);
+        const bool inCheck = MoveFunctions::isKingInCheck(board.getSide(), board);
+        int bestScore = -INFINITY_SCORE;
+        int standPat = -INFINITY_SCORE;
+        if (!inCheck) {
+            standPat = Evaluation::evaluate(board);
+            if (standPat >= beta) return standPat;
+            alpha = std::max(alpha, standPat);
+            bestScore = standPat;
+        }
 
-        MoveList captures = MoveFunctions::getAllLegalCaptures(board);
+        MoveList moves = inCheck ? MoveFunctions::getAllLegalMoves(board) : MoveFunctions::getAllLegalCaptures(board);
+        if (inCheck && moves.isEmpty()) return -MATE_SCORE + ply;
         std::array<int, 256> scores{};
-        orderMoves(captures, scores, board, Move{}, ply);
+        orderMoves(moves, scores, board, Move{}, ply);
 
-        int bestScore = standPat;
-        for (int index = 0; index < captures.size(); index++) {
-            pickNextMove(captures, scores, index);
-            Move &move = captures[index];
-            const Piece victim = move.moveType == EN_PASSANT ? PAWN : board.getPieceOnTheIndex(move.to).piece;
-            if (move.moveType != PROMOTION && standPat + materialWeight[victim] + DELTA_PRUNING_MARGIN < alpha)
-                continue;
+        for (int index = 0; index < moves.size(); index++) {
+            pickNextMove(moves, scores, index);
+            Move &move = moves[index];
+            if (!inCheck && move.moveType != PROMOTION) {
+                const Piece victim = move.moveType == EN_PASSANT ? PAWN : board.getPieceOnTheIndex(move.to).piece;
+                if (standPat + materialWeight[victim] + DELTA_PRUNING_MARGIN < alpha) continue;
+                if (scores[index] < 0) continue;
+            }
 
             const BoardState savedState = board.saveState();
             board.makeMove(move);
@@ -194,7 +218,7 @@ namespace Search {
         return bestScore;
     }
 
-    int alphaBeta(Board &board, int depth, int alpha, const int beta, const int ply) {
+    int alphaBeta(Board &board, int depth, int alpha, const int beta, const int ply, const bool allowNullMove) {
         const U64 positionHash = board.getPositionHash();
         if (ply > 0 && (gameHistory->isRepetition(positionHash) ||
                         gameHistory->pliesSinceIrreversibleMove() >= FIFTY_MOVE_RULE_PLIES))
@@ -222,6 +246,25 @@ namespace Search {
             }
         }
 
+        if (!isPvNode && !inCheck) {
+            const int staticEval = Evaluation::evaluate(board);
+            if (depth <= REVERSE_FUTILITY_MAX_DEPTH && std::abs(beta) < MATE_THRESHOLD &&
+                staticEval - REVERSE_FUTILITY_MARGIN_PER_DEPTH * depth >= beta)
+                return staticEval;
+
+            if (allowNullMove && depth >= NULL_MOVE_MIN_DEPTH && staticEval >= beta &&
+                hasNonPawnMaterial(board, board.getSide())) {
+                const int reduction = 3 + depth / 6;
+                const BoardState savedState = board.saveState();
+                board.makeNullMove();
+                gameHistory->addPosition(board.getPositionHash(), true);
+                const int score = -alphaBeta(board, depth - 1 - reduction, -beta, -beta + 1, ply + 1, false);
+                undoSearchMove(board, savedState);
+                if (stopRequested) return 0;
+                if (score >= beta) return score > MATE_THRESHOLD ? beta : score;
+            }
+        }
+
         MoveList moves = MoveFunctions::getAllLegalMoves(board);
         if (moves.isEmpty()) return inCheck ? -MATE_SCORE + ply : 0;
 
@@ -240,14 +283,14 @@ namespace Search {
             makeSearchMove(board, move);
             int score;
             if (index == 0) {
-                score = -alphaBeta(board, depth - 1, -beta, -alpha, ply + 1);
+                score = -alphaBeta(board, depth - 1, -beta, -alpha, ply + 1, true);
             } else {
                 const int reduction = lateMoveReduction(depth, index, isQuiet, inCheck);
-                score = -alphaBeta(board, depth - 1 - reduction, -alpha - 1, -alpha, ply + 1);
+                score = -alphaBeta(board, depth - 1 - reduction, -alpha - 1, -alpha, ply + 1, true);
                 if (score > alpha && reduction > 0)
-                    score = -alphaBeta(board, depth - 1, -alpha - 1, -alpha, ply + 1);
+                    score = -alphaBeta(board, depth - 1, -alpha - 1, -alpha, ply + 1, true);
                 if (score > alpha && score < beta)
-                    score = -alphaBeta(board, depth - 1, -beta, -alpha, ply + 1);
+                    score = -alphaBeta(board, depth - 1, -beta, -alpha, ply + 1, true);
             }
             undoSearchMove(board, savedState);
             if (stopRequested) return 0;
@@ -273,20 +316,17 @@ namespace Search {
         return bestScore;
     }
 
-    Move getBestMove(Board &board, MoveHistory::MoveHistory &history, const SearchLimits &limits) {
-        resetSearchState(history, limits);
-        MoveList rootMoves = MoveFunctions::getAllLegalMoves(board);
-        if (rootMoves.isEmpty()) return {};
-        if (rootMoves.size() == 1) return rootMoves[0];
+    namespace {
+        struct RootResult {
+            Move bestMove;
+            int bestScore = -INFINITY_SCORE;
+        };
 
-        Move bestMove = rootMoves[0];
-        for (int depth = 1; depth <= limits.maxDepth; depth++) {
+        RootResult searchRoot(Board &board, MoveList &rootMoves, const Move &previousBest, const int depth,
+                              int alpha, const int beta) {
             std::array<int, 256> scores{};
-            orderMoves(rootMoves, scores, board, bestMove, 0);
-
-            int alpha = -INFINITY_SCORE;
-            Move iterationBestMove;
-            int iterationBestScore = -INFINITY_SCORE;
+            orderMoves(rootMoves, scores, board, previousBest, 0);
+            RootResult result;
             for (int index = 0; index < rootMoves.size(); index++) {
                 pickNextMove(rootMoves, scores, index);
                 Move &move = rootMoves[index];
@@ -295,37 +335,67 @@ namespace Search {
                 makeSearchMove(board, move);
                 int score;
                 if (index == 0) {
-                    score = -alphaBeta(board, depth - 1, -INFINITY_SCORE, -alpha, 1);
+                    score = -alphaBeta(board, depth - 1, -beta, -alpha, 1, true);
                 } else {
-                    score = -alphaBeta(board, depth - 1, -alpha - 1, -alpha, 1);
-                    if (score > alpha && !stopRequested)
-                        score = -alphaBeta(board, depth - 1, -INFINITY_SCORE, -alpha, 1);
+                    score = -alphaBeta(board, depth - 1, -alpha - 1, -alpha, 1, true);
+                    if (score > alpha && score < beta && !stopRequested)
+                        score = -alphaBeta(board, depth - 1, -beta, -alpha, 1, true);
                 }
                 undoSearchMove(board, savedState);
                 if (stopRequested) break;
 
-                if (score > iterationBestScore) {
-                    iterationBestScore = score;
-                    iterationBestMove = move;
-                    alpha = score;
+                if (score > result.bestScore) {
+                    result.bestScore = score;
+                    result.bestMove = move;
                 }
+                if (score > alpha) alpha = score;
+                if (alpha >= beta) break;
+            }
+            return result;
+        }
+    }
+
+    Move getBestMove(Board &board, MoveHistory::MoveHistory &history, const SearchLimits &limits) {
+        resetSearchState(history, limits);
+        MoveList rootMoves = MoveFunctions::getAllLegalMoves(board);
+        if (rootMoves.isEmpty()) return {};
+        if (rootMoves.size() == 1) return rootMoves[0];
+
+        Move bestMove = rootMoves[0];
+        int previousScore = 0;
+        for (int depth = 1; depth <= limits.maxDepth; depth++) {
+            int windowAlpha = -INFINITY_SCORE, windowBeta = INFINITY_SCORE;
+            if (depth >= ASPIRATION_MIN_DEPTH && std::abs(previousScore) < MATE_THRESHOLD) {
+                windowAlpha = previousScore - ASPIRATION_WINDOW;
+                windowBeta = previousScore + ASPIRATION_WINDOW;
             }
 
-            if (iterationBestMove.from != -1) bestMove = iterationBestMove;
-            if (stopRequested) break;
+            RootResult result;
+            while (true) {
+                result = searchRoot(board, rootMoves, bestMove, depth, windowAlpha, windowBeta);
+                if (stopRequested) break;
+                if (result.bestScore <= windowAlpha) windowAlpha = -INFINITY_SCORE;
+                else if (result.bestScore >= windowBeta) windowBeta = INFINITY_SCORE;
+                else break;
+            }
 
-            TranspositionTable::store(board.getPositionHash(), depth, iterationBestScore, TranspositionTable::EXACT,
+            if (result.bestMove.from != -1 && (!stopRequested || result.bestScore > windowAlpha))
+                bestMove = result.bestMove;
+            if (stopRequested) break;
+            previousScore = result.bestScore;
+
+            TranspositionTable::store(board.getPositionHash(), depth, result.bestScore, TranspositionTable::EXACT,
                                       bestMove);
             const long long elapsed = elapsedMs();
             std::cout << "info depth " << depth
-                    << " score " << formatScore(iterationBestScore)
+                    << " score " << formatScore(result.bestScore)
                     << " nodes " << nodesSearched
                     << " time " << elapsed
                     << " nps " << nodesSearched * 1000 / std::max(elapsed, 1LL)
                     << " pv " << principalVariation(board, depth) << "\n";
             std::cout.flush();
 
-            if (std::abs(iterationBestScore) > MATE_THRESHOLD) break;
+            if (std::abs(result.bestScore) > MATE_THRESHOLD && depth > 1) break;
             if (timeBudgetMs >= 0 && elapsed * 2 >= timeBudgetMs) break;
         }
         return bestMove;
