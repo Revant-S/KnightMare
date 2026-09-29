@@ -16,6 +16,8 @@ public:
 
     void toggle_side();
 
+    void makeNullMove();
+
     void print_board() const;
 
     U64 getPieceBitBoard(const Piece piece, const Color color) const { return bitboards[color][piece]; }

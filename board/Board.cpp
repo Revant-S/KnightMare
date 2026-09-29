@@ -101,6 +101,13 @@ void Board::toggle_side() {
     positionHash ^= zobristKeys.blackToMove;
 }
 
+void Board::makeNullMove() {
+    const int previousEnPassantSquare = enPassantSquare;
+    enPassantSquare = -1;
+    updateHashForStateChange(castleRights, previousEnPassantSquare);
+    toggle_side();
+}
+
 void Board::print_board() const {
     std::cout << "\n";
 
