@@ -132,17 +132,6 @@ void Board::print_board() const {
     std::cout << "Side to move: " << (side == WHITE ? "White" : "Black") << "\n";
 }
 
-U64 Board::getPieceBitBoard(const Piece piece, const Color color) const {
-    if (piece > KING || color > BLACK) {
-        return static_cast<U64>(0);
-    }
-    return bitboards[color][piece];
-}
-
-U64 Board::getOccupancies(const Color color) const {
-    return occupancies[color];
-}
-
 void Board::getAndPrintPawnMovePermissions() {
     std::cout << "permissions mask\n";
     std::cout << std::bitset<16>(doublePawnMoveRight) << "\n";;
@@ -180,10 +169,6 @@ inline void Board::clearEnPassantSquare() {
     enPassantSquare = -1;
 }
 
-int Board::getEnpassantSquare() const {
-    return enPassantSquare;
-}
-
 void Board::setPieceBitBoard(Color color, Piece piece, U64 newBitBoard) {
     bitboards[color][piece] = newBitBoard;
 }
@@ -216,10 +201,6 @@ void Board::placePiece(const int square, Piece piece, Color color) {
     };
 }
 
-ColorPiece Board::getPieceOnTheIndex(const int index) const {
-    return mailBox[index];
-}
-
 U64 Board::generatePositionHash() const {
     U64 hash = 0;
     U64 pieces = occupancies[BOTH];
@@ -232,10 +213,6 @@ U64 Board::generatePositionHash() const {
     if (enPassantSquare != -1) hash ^= zobristKeys.enPassantFile[enPassantSquare % BOARD_WIDTH];
     if (side == BLACK) hash ^= zobristKeys.blackToMove;
     return hash;
-}
-
-U64 Board::getPositionHash() const {
-    return positionHash;
 }
 
 void Board::updateHashForStateChange(const int previousCastleRights, const int previousEnPassantSquare) {
@@ -473,6 +450,3 @@ int Board::getCastleRights(Color color) const {
     return castleRights & (BLACK_KING_SIDE_CASTLE_MASK | BLACK_QUEEN_SIDE_CASTLE_MASK);
 }
 
-Color Board::getSide() const {
-    return side;
-}

@@ -43,7 +43,7 @@ namespace Utils {
         for (auto &move: moves) {
             std::cout << moveToString(move);
             if (move.moveType != SIMPLE) {
-                std::cout << " (type=" << move.moveType << ")";
+                std::cout << " (type=" << moveTypeString[move.moveType] << ")";
             }
             std::cout << "\n";
         }

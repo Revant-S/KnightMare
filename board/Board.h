@@ -18,9 +18,9 @@ public:
 
     void print_board() const;
 
-    U64 getPieceBitBoard(Piece piece, Color color) const;
+    U64 getPieceBitBoard(const Piece piece, const Color color) const { return bitboards[color][piece]; }
 
-    U64 getOccupancies(Color color) const;
+    U64 getOccupancies(const Color color) const { return occupancies[color]; }
 
     void getAndPrintPawnMovePermissions();
 
@@ -30,7 +30,7 @@ public:
 
     void clearEnPassantSquare();
 
-    int getEnpassantSquare() const;
+    int getEnpassantSquare() const { return enPassantSquare; }
 
     void setPieceBitBoard(Color color, Piece piece, U64 newBitBoard);
 
@@ -54,15 +54,15 @@ public:
 
     void clearCastleRight(Color color, Piece piece);
 
-    ColorPiece getPieceOnTheIndex(int index) const;
+    ColorPiece getPieceOnTheIndex(const int index) const { return mailBox[index]; }
 
     U64 generatePositionHash() const;
 
-    [[nodiscard]] U64 getPositionHash() const;
+    [[nodiscard]] U64 getPositionHash() const { return positionHash; }
 
     [[nodiscard]] int getCastleRights(Color color) const;
 
-    [[nodiscard]] Color getSide() const;
+    [[nodiscard]] Color getSide() const { return side; }
 
 private:
     std::array<std::array<U64, 6>, 2> bitboards = {0};
