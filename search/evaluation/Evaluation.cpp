@@ -99,6 +99,26 @@ namespace Evaluation {
                    std::abs(first % BOARD_WIDTH - second % BOARD_WIDTH);
         }
 
+        struct PawnCacheEntry {
+            U64 whitePawns = ~0ULL;
+            U64 blackPawns = ~0ULL;
+            TaperedScore whiteMinusBlack;
+        };
+
+        constexpr int PAWN_CACHE_SIZE = 1 << 14;
+        std::array<PawnCacheEntry, PAWN_CACHE_SIZE> pawnCache;
+
+        TaperedScore cachedPawnStructure(const Board &board) {
+            const U64 whitePawns = board.getPieceBitBoard(PAWN, WHITE);
+            const U64 blackPawns = board.getPieceBitBoard(PAWN, BLACK);
+            const U64 key = (whitePawns * 0x9E3779B97F4A7C15ULL) ^ (blackPawns * 0xC2B2AE3D27D4EB4FULL);
+            PawnCacheEntry &entry = pawnCache[key >> (64 - 14)];
+            if (entry.whitePawns != whitePawns || entry.blackPawns != blackPawns) {
+                entry = {whitePawns, blackPawns, pawnStructureScore(board, WHITE) - pawnStructureScore(board, BLACK)};
+            }
+            return entry.whiteMinusBlack;
+        }
+
         int nonPawnMaterial(const Board &board, const Color side) {
             int material = 0;
             for (int piece = KNIGHT; piece <= QUEEN; piece++) {
@@ -283,12 +303,13 @@ namespace Evaluation {
             TaperedScore &score = side == WHITE ? whiteScore : blackScore;
             score += materialScore(board, side);
             score += pieceSquareScore(board, side);
-            score += pawnStructureScore(board, side);
             score += pieceActivityScore(board, side);
             score += kingSafetyScore(board, side);
         }
 
-        const int absoluteScore = blendByPhase(whiteScore - blackScore, gamePhase(board)) + mopUpScore(board);
+        TaperedScore balance = whiteScore - blackScore;
+        balance += cachedPawnStructure(board);
+        const int absoluteScore = blendByPhase(balance, gamePhase(board)) + mopUpScore(board);
         return (board.getSide() == WHITE ? absoluteScore : -absoluteScore) + TEMPO_BONUS;
     }
 } // Evaluation
