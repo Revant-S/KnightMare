@@ -125,58 +125,37 @@ namespace PreMatchAttackComputation {
         std::vector<U64> rookAttackTable;
         std::vector<U64> bishopAttackTable;
 
-        void findMagics(Magic (&magics)[64], std::vector<U64> &table, const U64 (&rays)[64][4], const bool isRook) {
-            std::mt19937_64 generator(isRook ? 0x526F6F6BULL : 0x42697368ULL);
-            std::vector<std::size_t> offsets(64);
+        void buildMagicTable(Magic (&magics)[64], std::vector<U64> &table, const U64 (&rays)[64][4],
+                             const std::array<U64, 64> &magicNumbers, const bool isRook) {
             std::size_t tableSize = 0;
             for (int square = 0; square < 64; square++) {
                 U64 fullRays = 0;
                 for (int direction = 0; direction < 4; direction++) fullRays |= rays[square][direction];
                 magics[square].relevantOccupancy = fullRays & ~edgesNotOnRay(square);
+                magics[square].magicNumber = magicNumbers[square];
                 magics[square].shift = 64 - std::popcount(magics[square].relevantOccupancy);
-                offsets[square] = tableSize;
                 tableSize += 1ULL << std::popcount(magics[square].relevantOccupancy);
             }
             table.assign(tableSize, 0);
 
-            std::vector<U64> occupancies, attacks;
-            std::vector<int> usedAt;
+            U64 *nextFreeSlot = table.data();
             for (int square = 0; square < 64; square++) {
                 Magic &magic = magics[square];
-                magic.attacks = table.data() + offsets[square];
-                occupancies.clear();
-                attacks.clear();
+                magic.attacks = nextFreeSlot;
+                nextFreeSlot += 1ULL << (64 - magic.shift);
                 U64 subset = 0;
                 do {
-                    occupancies.push_back(subset);
-                    attacks.push_back(slidingAttacksSlow(square, subset, rays, isRook));
+                    magic.attacks[(subset * magic.magicNumber) >> magic.shift] =
+                            slidingAttacksSlow(square, subset, rays, isRook);
                     subset = (subset - magic.relevantOccupancy) & magic.relevantOccupancy;
                 } while (subset);
-
-                const std::size_t entries = occupancies.size();
-                usedAt.assign(entries, -1);
-                for (int attempt = 1;; attempt++) {
-                    magic.magicNumber = generator() & generator() & generator();
-                    if (std::popcount((magic.relevantOccupancy * magic.magicNumber) >> 56) < 6) continue;
-                    bool isValid = true;
-                    for (std::size_t index = 0; index < entries && isValid; index++) {
-                        const std::size_t slot = (occupancies[index] * magic.magicNumber) >> magic.shift;
-                        if (usedAt[slot] != attempt) {
-                            usedAt[slot] = attempt;
-                            magic.attacks[slot] = attacks[index];
-                        } else if (magic.attacks[slot] != attacks[index]) {
-                            isValid = false;
-                        }
-                    }
-                    if (isValid) break;
-                }
             }
         }
     }
 
     void generateMagics() {
-        findMagics(rookMagics, rookAttackTable, rookRays, true);
-        findMagics(bishopMagics, bishopAttackTable, bishopRays, false);
+        buildMagicTable(rookMagics, rookAttackTable, rookRays, ROOK_MAGIC_NUMBERS, true);
+        buildMagicTable(bishopMagics, bishopAttackTable, bishopRays, BISHOP_MAGIC_NUMBERS, false);
     }
 
     void generateLineTables() {
