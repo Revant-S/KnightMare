@@ -16,11 +16,13 @@ public:
 
     void toggle_side();
 
+    void makeNullMove();
+
     void print_board() const;
 
-    U64 getPieceBitBoard(Piece piece, Color color) const;
+    U64 getPieceBitBoard(const Piece piece, const Color color) const { return bitboards[color][piece]; }
 
-    U64 getOccupancies(Color color) const;
+    U64 getOccupancies(const Color color) const { return occupancies[color]; }
 
     void getAndPrintPawnMovePermissions();
 
@@ -30,7 +32,7 @@ public:
 
     void clearEnPassantSquare();
 
-    int getEnpassantSquare() const;
+    int getEnpassantSquare() const { return enPassantSquare; }
 
     void setPieceBitBoard(Color color, Piece piece, U64 newBitBoard);
 
@@ -54,17 +56,15 @@ public:
 
     void clearCastleRight(Color color, Piece piece);
 
-    ColorPiece getPieceOnTheIndex(int index) const;
+    ColorPiece getPieceOnTheIndex(const int index) const { return mailBox[index]; }
 
-    void generateKeysForHashing();
+    U64 generatePositionHash() const;
 
-    U64 generatePositionHash();
-
-    U64 getPieceKey(Piece piece, Color color, int position);
+    [[nodiscard]] U64 getPositionHash() const { return positionHash; }
 
     [[nodiscard]] int getCastleRights(Color color) const;
 
-    [[nodiscard]] Color getSide() const;
+    [[nodiscard]] Color getSide() const { return side; }
 
 private:
     std::array<std::array<U64, 6>, 2> bitboards = {0};
@@ -81,6 +81,8 @@ private:
     int castleRights = 0b1111; // black queen | black king white queen white king
     int enPassantSquare = -1;
     std::array<ColorPiece, 64> mailBox;
-    std::array<std::array<std::array<U64, 2>, 64>, 6> pieceKey;
+    U64 positionHash = 0;
+
+    void updateHashForStateChange(int previousCastleRights, int previousEnPassantSquare);
 };
 #endif //BOARD_H

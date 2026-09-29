@@ -14,11 +14,11 @@ struct SquareCoords {
     int file;
 };
 
-enum Color {
+enum Color : uint8_t {
     WHITE, BLACK, BOTH
 };
 
-enum Piece {
+enum Piece : uint8_t {
     PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING
 };
 
@@ -26,7 +26,7 @@ enum Direction {
     NORTH, SOUTH, EAST, WEST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST
 };
 
-enum MoveType {
+enum MoveType : uint8_t {
     SIMPLE, PROMOTION, CASTLE_KING_SIDE, CASTLE_QUEEN_SIDE, EN_PASSANT, DOUBLE_PAWN_MOVE
 };
 
@@ -40,8 +40,12 @@ struct Move {
 };
 
 struct MoveList {
-    Move moves[256];
+    union {
+        Move moves[256];
+    };
     int count = 0;
+
+    MoveList() {}
     void addMove(const Move &move) { moves[count++] = move; }
     Move *begin() { return moves; }
     Move *end() { return moves + count; }
@@ -65,6 +69,7 @@ struct BoardState {
     int enPassantSquare;
     int castleRights;
     Color side;
+    U64 positionHash;
 };
 
 #endif //TYPES_H

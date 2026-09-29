@@ -7,23 +7,42 @@
 #include "../../board/Board.h"
 
 namespace Evaluation {
+    struct TaperedScore {
+        int midGame = 0;
+        int endGame = 0;
+
+        TaperedScore &operator+=(const TaperedScore &other) {
+            midGame += other.midGame;
+            endGame += other.endGame;
+            return *this;
+        }
+
+        TaperedScore operator-(const TaperedScore &other) const {
+            return {midGame - other.midGame, endGame - other.endGame};
+        }
+    };
+
     int evaluate(Board &board);
 
-    bool isEndGameReached(Board &board);
+    int gamePhase(const Board &board);
 
-    int compareMaterial(Board &board);
+    bool isEndGameReached(const Board &board);
 
-    int assesPieceDevelopment(Board &board);
+    bool isInsufficientMaterial(const Board &board);
 
-    int totalMaterialValue(Board &board, Color side);
+    int blendByPhase(const TaperedScore &score, int phase);
 
-    int calculatePieceDevelopmentScore(Board &board, Color side, Piece piece);
+    TaperedScore materialScore(const Board &board, Color side);
 
-    int materialValue(Board &board, Piece piece, Color side);
+    TaperedScore pieceSquareScore(const Board &board, Color side);
 
-    std::array<int, 64> getPSTArray(Piece piece, Board &board);
+    TaperedScore pawnStructureScore(const Board &board, Color side);
 
-    int kingSafetyScore(Board &board, Color side);
-} // Evaluationa
+    TaperedScore pieceActivityScore(const Board &board, Color side);
+
+    TaperedScore kingSafetyScore(const Board &board, Color side);
+
+    int mopUpScore(const Board &board);
+} // Evaluation
 
 #endif //EVALUTATION_H

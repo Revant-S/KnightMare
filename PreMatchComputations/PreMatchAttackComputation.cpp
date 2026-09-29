@@ -21,7 +21,7 @@ namespace PreMatchAttackComputation {
         }
     }
 
-    void generateBishopAttacks() {
+    void generateBishopRays() {
         for (int square = 0; square < 64; square++) {
             auto [rank, file] = Utils::getCoordinates(square);
 
@@ -31,7 +31,7 @@ namespace PreMatchAttackComputation {
 
                 while (nextRank >= 0 && nextFile >= 0 && nextRank < BOARD_HEIGHT && nextFile < BOARD_WIDTH) {
                     // west subtracted as bishop has only diagonal directions so 4 is subtracted
-                    bishopAttacks[square][direction - 4] |= static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile);
+                    bishopRays[square][direction - 4] |= static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile);
                     nextRank += directions[direction].first;
                     nextFile += directions[direction].second;
                 }
@@ -39,30 +39,18 @@ namespace PreMatchAttackComputation {
         }
     }
 
-    void generateRookAttacks() {
+    void generateRookRays() {
         for (int i = 0; i < 64; i++) {
             auto [rank, file] = Utils::getCoordinates(i);
 
             for (int direction = NORTH; direction <= WEST; direction++) {
                 int nextRank = rank + directions[direction].first;
                 int nextFile = file + directions[direction].second;
-                while (nextRank >= 0 && nextFile >= 0 && nextRank < 3 && nextFile < BOARD_WIDTH) {
-                    rookAttacks[i][direction] |= (static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile));
+                while (nextRank >= 0 && nextFile >= 0 && nextRank < BOARD_HEIGHT && nextFile < BOARD_WIDTH) {
+                    rookRays[i][direction] |= (static_cast<U64>(1) << (nextRank * BOARD_WIDTH + nextFile));
                     nextRank += directions[direction].first;
                     nextFile += directions[direction].second;
                 }
-            }
-        }
-    }
-
-    void generateQueenAttacks() {
-        for (int square = 0; square < 64; square++) {
-            for (int direction = NORTH; direction <= WEST; direction++) {
-                queenAttacks[square][direction] = rookAttacks[square][direction];
-            }
-
-            for (int direction = NORTH_EAST; direction <= SOUTH_WEST; direction++) {
-                queenAttacks[square][direction] = bishopAttacks[square][direction - 4];
             }
         }
     }
@@ -109,12 +97,90 @@ namespace PreMatchAttackComputation {
         }
     }
 
+    namespace {
+        U64 slidingAttacksSlow(const int square, const U64 occupancy, const U64 (&rays)[64][4], const bool isRook) {
+            U64 attacks = 0;
+            for (int direction = 0; direction < 4; direction++) {
+                const U64 fullRay = rays[square][direction];
+                const U64 blockers = fullRay & occupancy;
+                if (!blockers) {
+                    attacks |= fullRay;
+                    continue;
+                }
+                const bool towardsHigherSquares = isRook ? (direction == 0 || direction == 2) : (direction <= 1);
+                const int nearestBlocker = towardsHigherSquares ? Utils::getLSB(blockers) : Utils::getMSB(blockers);
+                attacks |= fullRay ^ rays[nearestBlocker][direction];
+            }
+            return attacks;
+        }
+
+        U64 edgesNotOnRay(const int square) {
+            constexpr U64 RANK_1 = 0xFFULL, RANK_8 = 0xFFULL << 56;
+            constexpr U64 FILE_A = FILE_A_MASK, FILE_H = FILE_A_MASK << 7;
+            const U64 rank = 0xFFULL << (8 * (square / BOARD_WIDTH));
+            const U64 file = FILE_A_MASK << (square % BOARD_WIDTH);
+            return ((RANK_1 | RANK_8) & ~rank) | ((FILE_A | FILE_H) & ~file);
+        }
+
+        std::vector<U64> rookAttackTable;
+        std::vector<U64> bishopAttackTable;
+
+        void buildMagicTable(Magic (&magics)[64], std::vector<U64> &table, const U64 (&rays)[64][4],
+                             const std::array<U64, 64> &magicNumbers, const bool isRook) {
+            std::size_t tableSize = 0;
+            for (int square = 0; square < 64; square++) {
+                U64 fullRays = 0;
+                for (int direction = 0; direction < 4; direction++) fullRays |= rays[square][direction];
+                magics[square].relevantOccupancy = fullRays & ~edgesNotOnRay(square);
+                magics[square].magicNumber = magicNumbers[square];
+                magics[square].shift = 64 - std::popcount(magics[square].relevantOccupancy);
+                tableSize += 1ULL << std::popcount(magics[square].relevantOccupancy);
+            }
+            table.assign(tableSize, 0);
+
+            U64 *nextFreeSlot = table.data();
+            for (int square = 0; square < 64; square++) {
+                Magic &magic = magics[square];
+                magic.attacks = nextFreeSlot;
+                nextFreeSlot += 1ULL << (64 - magic.shift);
+                U64 subset = 0;
+                do {
+                    magic.attacks[(subset * magic.magicNumber) >> magic.shift] =
+                            slidingAttacksSlow(square, subset, rays, isRook);
+                    subset = (subset - magic.relevantOccupancy) & magic.relevantOccupancy;
+                } while (subset);
+            }
+        }
+    }
+
+    void generateMagics() {
+        buildMagicTable(rookMagics, rookAttackTable, rookRays, ROOK_MAGIC_NUMBERS, true);
+        buildMagicTable(bishopMagics, bishopAttackTable, bishopRays, BISHOP_MAGIC_NUMBERS, false);
+    }
+
+    void generateLineTables() {
+        for (int from = 0; from < 64; from++) {
+            for (int to = 0; to < 64; to++) {
+                if (from == to) continue;
+                const U64 fromBit = 1ULL << from, toBit = 1ULL << to;
+                if (getRookAttacks(from, 0) & toBit) {
+                    squaresBetween[from][to] = getRookAttacks(from, toBit) & getRookAttacks(to, fromBit);
+                    lineThrough[from][to] = (getRookAttacks(from, 0) & getRookAttacks(to, 0)) | fromBit | toBit;
+                } else if (getBishopAttacks(from, 0) & toBit) {
+                    squaresBetween[from][to] = getBishopAttacks(from, toBit) & getBishopAttacks(to, fromBit);
+                    lineThrough[from][to] = (getBishopAttacks(from, 0) & getBishopAttacks(to, 0)) | fromBit | toBit;
+                }
+            }
+        }
+    }
+
     void init() {
         generateKnightAttacks();
-        generateBishopAttacks();
-        generateRookAttacks();
-        generateQueenAttacks();
+        generateBishopRays();
+        generateRookRays();
         generateKingAttacks();
         generatePawnAttacks();
+        generateMagics();
+        generateLineTables();
     }
 } // MoveGen
