@@ -12,15 +12,13 @@ namespace MoveFunctions {
 
     bool isSquareAttackedByEnemy(Color color, int squareIndex, Board &board);
 
+    U64 attackersTo(int square, Color attacker, U64 occupancy, const Board &board);
+
     MoveList getAllLegalMoves(Board &board);
 
     MoveList getAllLegalCaptures(Board &board);
 
     bool isCapture(const Move &move, const Board &board);
-
-    U64 getRookAttacks(int square, U64 occupancy);
-
-    U64 getBishopAttacks(int square, U64 occupancy);
 } // MoveFunctions
 
 #endif //MOVEFUNCTIONS_H
